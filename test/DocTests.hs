@@ -3,4 +3,4 @@ module Main where
 import Test.DocTest
 
 main :: IO ()
-main = doctest ["Parser.hs", "Eval.hs"]
+main = doctest ["Ylang/Parser.hs", "Ylang/Eval.hs"]

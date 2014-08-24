@@ -1,4 +1,4 @@
-module Eval where
+module Ylang.Eval where
 
 import Data.List as List (intercalate)
 import Data.Set ((\\), Set, fromList)
@@ -6,7 +6,7 @@ import qualified Data.Set as Set
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-import Syntax
+import Ylang.Syntax
 
 -- |
 -- Show code typing by User
@@ -151,11 +151,6 @@ builtins = Map.fromList
 -- >>> let expr = Call func [Var "y"]
 -- >>> fst $ eval Map.empty expr
 -- Var "y"
---
--- >>> let env  = builtins
--- >>> let expr = Call (Var "seq") [Int 1,Int 2]
--- >>> fst $ eval env expr
--- Int 2
 --
 -- >>> let env = Map.fromList [(Var "x",Int 100)]
 -- >>> fst $ eval env (Var "x")

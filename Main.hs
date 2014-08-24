@@ -6,7 +6,7 @@ import System.IO
 import System.Environment
 import System.Console.Haskeline
 
-import Parser
+import Ylang.Parser
 
 main :: IO ()
 main = do
