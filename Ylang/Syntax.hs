@@ -1,4 +1,4 @@
-module Syntax where
+module Ylang.Syntax where
 
 type Name = String
 

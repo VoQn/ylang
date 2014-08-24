@@ -1,4 +1,4 @@
-module Parser where
+module Ylang.Parser where
 
 import Text.Parsec
 import Text.Parsec.String (Parser)
@@ -6,8 +6,8 @@ import qualified Text.Parsec.Expr as Ex
 
 import Control.Applicative ((<$>), (<*>), (*>), (<*))
 
-import qualified Lexer as L
-import qualified Syntax as S
+import qualified Ylang.Lexer as L
+import qualified Ylang.Syntax as S
 
 makeStdinParser :: Parser a -> String -> Either ParseError a
 makeStdinParser p s = parse (contents p) "<stdin>" s

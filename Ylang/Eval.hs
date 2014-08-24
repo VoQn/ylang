@@ -1,4 +1,4 @@
-module Eval where
+module Ylang.Eval where
 
 import Data.List as List (intercalate)
 import Data.Set ((\\), Set, fromList)
@@ -6,7 +6,7 @@ import qualified Data.Set as Set
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-import Syntax
+import Ylang.Syntax
 
 -- |
 -- Show code typing by User
