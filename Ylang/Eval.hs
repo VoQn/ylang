@@ -65,23 +65,31 @@ yexpr expr = case expr of
 -- fromList [Var "y"]
 --
 -- (-> (x y) [w,x,y,z]) ... [w,z]
--- >>> freeVars $ Lambda [Var "x",Var "y"] $ List [Var "w",Var "x",Var "y",Var "z"]
+-- >>> let args = [Var "x",Var "y"]
+-- >>> let expr = List [Var "w",Var "x",Var "y",Var "z"]
+-- >>> freeVars $ Lambda args expr
 -- fromList [Var "w",Var "z"]
 --
 -- (-> x (+ x 1))
--- >>> freeVars $ Lambda [Var "x"] $ Call (Operator "+") [Var "x",Int 1]
+-- >>> let args = [Var "x"]
+-- >>> let expr = Call (Operator "+") [Var "x",Int 1]
+-- >>> freeVars $ Lambda args expr
 -- fromList []
 --
 -- (-> x (+ y 1))
--- >>> freeVars $ Lambda [Var "x"] $ Call (Operator "+") [Var "y",Int 1]
+-- >>> let args = [Var "x"]
+-- >>> let expr = Call (Operator "+") [Var "y",Int 1]
+-- >>> freeVars $ Lambda args expr
 -- fromList [Var "y"]
 --
 -- ((-> y y) 1) ... []
--- >>> freeVars $ Call (Lambda [Var "y"] (Var "y")) [Int 1]
+-- >>> let func = Lambda [Var "y"] $ Var "y"
+-- >>> freeVars $ Call func [Int 1]
 -- fromList []
 --
 -- ((-> y x) 1) ... [x]
--- >>> freeVars $ Call (Lambda [Var "y"] (Var "x")) [Int 1]
+-- >>> let func = Lambda [Var "y"] $ Var "x"
+-- >>> freeVars $ Call func [Int 1]
 -- fromList [Var "x"]
 --
 freeVars :: Expr -> Set Expr
@@ -117,27 +125,34 @@ freeVars expr = case expr of
 -- |
 -- Alpha Conversion for Lambda Calculus
 --
+-- Convertable case:
 -- (-> x ((-> x x) x)) ... (-> y ((-> x x) y))
--- >>> alpha $ Lambda [Var "x"] (Call (Lambda [Var "x"] (Var "x")) [Var "x"])
+-- >>> let g = Lambda [Var "x"] $ Var "x"
+-- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
+-- >>> alpha $ f
 -- Lambda [Var "y_0"] (Call (Lambda [Var "x_0"] (Var "x_0")) [Var "y_0"])
 --
+-- Not-Convertable case:
 -- (-> x ((-> y x) x)) ... (-> x ((-> y x) x))
--- >>> alpha $ Lambda [Var "x"] (Call (Lambda [Var "y"] (Var "x")) [Var "x"])
+-- >>> let g = Lambda [Var "y"] $ Var "x"
+-- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
+-- >>> alpha $ f
 -- Lambda [Var "x"] (Call (Lambda [Var "y"] (Var "x")) [Var "x"])
 --
 alpha :: Expr -> Expr
-alpha f@(Lambda ys (Call g@(Lambda xs ex) zs))
-  | possible =
-      let
-        xs' = rename "x_" 0 [] xs
-        ys' = rename "y_" 0 [] ys
-        ex' = apply (Map.fromList $ zip xs xs') ex
-      in Lambda ys' $ Call (Lambda xs' ex') ys'
-  | otherwise = f
+alpha expr = case expr of
+  f@(Lambda ys (Call g@(Lambda xs ex) zs))
+    | hasNotOutScopeBind g ->
+        let
+          xs' = rename "x_" 0 [] xs
+          ys' = rename "y_" 0 [] ys
+          ex' = apply (Map.fromList $ zip xs xs') ex
+        in Lambda ys' $ Call (Lambda xs' ex') ys'
+    | otherwise -> f
+  _
+    -> expr
   where
-  possible = Set.null $ freeVars g
-
-alpha l = l
+  hasNotOutScopeBind g = Set.null $ freeVars g
 
 builtins :: Map Expr Expr
 builtins = Map.fromList
