@@ -144,8 +144,8 @@ alpha expr = case expr of
   f@(Lambda ys (Call g@(Lambda xs ex) zs))
     | hasNotOutScopeBind g ->
         let
-          xs' = rename "x_" 0 xs
-          ys' = rename "y_" 0 ys
+          xs' = rename "x_" 0 [] xs
+          ys' = rename "y_" 0 [] ys
           ex' = apply (Map.fromList $ zip xs xs') ex
         in Lambda ys' $ Call (Lambda xs' ex') ys'
     | otherwise -> f
@@ -201,43 +201,31 @@ applyf (Lambda (x@(Var _):[]) y@(Var _)) args@(a:as)
 -- Rename Variable identifier
 --
 -- >>> let vars = [Var "foo",Var "bar"]
--- >>> rename "x_" 0 vars
+-- >>> rename "x_" 0 [] vars
 -- [Var "x_0",Var "x_1"]
 --
 -- >>> let a_list = List [Var "a",Var "b"]
 -- >>> let b_list = List [Var "c",Var "d"]
--- >>> rename "x_" 0 [a_list, b_list]
+-- >>> rename "x_" 0 [] [a_list, b_list]
 -- [List [Var "x_0_0",Var "x_0_1"],List [Var "x_1_0",Var "x_1_1"]]
 --
-rename :: String -> Int -> [Expr] -> [Expr]
-rename prefix index exprs
-  = renames prefix index [] exprs
+rename :: String -> Int -> [Expr] -> [Expr] -> [Expr]
+rename p i rs es = case es of
+  []
+    -> reverse rs
+  v:vs
+    -> let (j, r) = rename' p i v
+       in rename p j (r:rs) vs
   where
-  renames p i rs xs = case xs of
-    [] -- target expression is empty
-      -> reverse rs
-
-    v@(Var _):vs
-      -> let (j, r) = rename' p i v
-         in renames p j (r:rs) vs
-
-    v@(List _):vs
-      -> let (j, r) = rename' p i v
-         in renames p j (r:rs) vs
-
-    v:vs -- Unable to rename case
-      -> let (j, r) = rename' p i v
-         in renames p j (r:rs) vs
-
   rename' :: String -> Int -> Expr -> (Int, Expr)
-  rename' p i ex = case ex of
+  rename' q k ex = case ex of
     Var _
-      -> (i + 1, Var $ p ++ show i)
+      -> (k + 1, Var $ q ++ show k)
 
     List ys
-      -> (i + 1, List $ rename (p ++ (show i) ++ "_") 0 ys)
+      -> (k + 1, List $ rename (q ++ (show k) ++ "_") 0 [] ys)
 
-    x -> (i, x)
+    x -> (k, x)
 
 -- |
 --
