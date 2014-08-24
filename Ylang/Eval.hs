@@ -221,22 +221,19 @@ rename p i rs ((List l):vs)
 
 -- |
 --
--- >>> apply (Map.fromList [(Var "x",Int 1)]) $ Var "x"
+-- >>> let env = Map.fromList [(Var "x",Int 1)]
+-- >>> apply env $ Var "x"
 -- Int 1
 --
--- >>> apply (Map.fromList [(Var "x",Int 1)]) $ List [Var "x",Var "x"]
+-- >>> let env = Map.fromList [(Var "x",Int 1)]
+-- >>> apply env $ List [Var "x",Var "x"]
 -- List [Int 1,Int 1]
 --
 apply :: Map Expr Expr -> Expr -> Expr
-apply t v@(Var _) = maybe v id $ Map.lookup v t
-apply t (List xs) = List $ applyTraverse t xs []
-apply t (Call f args) = Call f $ applyTraverse t args []
+apply env expr = case expr of
+  v@(Var _) -> maybe v id $ Map.lookup v env
+  List xs   -> List $ map (apply env) xs
+  Call f args
+    -> Call f $ map (apply env) args
 
--- Other : Literal Value (Int 10, Float 0.5, String "foo", Boolean True)
-apply t v = v
-
--- |
--- Traversal Apply
-applyTraverse :: Map Expr Expr -> [Expr] -> [Expr] -> [Expr]
-applyTraverse t [] rs     = reverse rs
-applyTraverse t (v:vs) rs = applyTraverse t vs ((apply t v):rs)
+  _ -> expr
