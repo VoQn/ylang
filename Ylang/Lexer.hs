@@ -1,8 +1,6 @@
 module Ylang.Lexer where
 
--- import Text.Parsec.String (Parser)
 import Text.Parsec.Language (emptyDef)
--- import Text.Parsec.Prim (many)
 
 import qualified Text.Parsec.Token as Token
 

@@ -116,6 +116,10 @@ freeVars expr = case expr of
     v@(Var _)
       -> Set.insert v $ collect args
 
+    Call g args'
+      -> Set.union (freeVars g) $ collect args'
+    _
+      -> Set.empty
   _ -- expression has not closed scope
     -> Set.empty
 
@@ -141,7 +145,7 @@ freeVars expr = case expr of
 --
 alpha :: Expr -> Expr
 alpha expr = case expr of
-  f@(Lambda ys (Call g@(Lambda xs ex) zs))
+  f@(Lambda ys (Call g@(Lambda xs ex) _))
     | hasNotOutScopeBind g ->
         let
           xs' = rename "x_" 0 [] xs
@@ -192,10 +196,12 @@ eval env expr =
 -- Int 10
 --
 applyf :: Expr -> [Expr] -> Expr
-applyf (Lambda (x@(Var _):[]) y@(Var _)) args@(a:as)
-  | x == y      = a
-  | elem y args = y
-  | otherwise   = List []
+applyf expr args = case expr of
+  Lambda (x@(Var _):[]) y@(Var _)
+    | x == y      -> head args
+    | elem y args -> y
+    | otherwise   -> List []
+  _ -> expr
 
 -- |
 -- Rename Variable identifier
