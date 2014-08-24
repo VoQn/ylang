@@ -1,6 +1,6 @@
 module Eval where
 
-import Data.List (intercalate)
+import Data.List as List (intercalate)
 import Data.Set ((\\), Set, fromList)
 import qualified Data.Set as Set
 import Data.Map (Map)
@@ -131,6 +131,54 @@ alpha f@(Lambda ys (Call g@(Lambda xs ex) zs))
   possible = Set.null $ freeVars g
 
 alpha l = l
+
+builtins :: Map Expr Expr
+builtins = Map.fromList
+  [
+      (Var "id", Lambda [Var "x"] (Var "x"))
+    , (Var "seq", Lambda [Var "x", Var "y"] (Var "y"))
+  ]
+
+-- |
+-- Evaluate Expression
+--
+-- >>> let env = Map.empty
+-- >>> fst $ eval env (Var "x")
+-- Var "x"
+--
+-- >>> let env  = Map.empty
+-- >>> let func = Lambda [Var "x"] (Var "x")
+-- >>> let expr = Call func [Var "y"]
+-- >>> fst $ eval Map.empty expr
+-- Var "y"
+--
+-- >>> let env  = builtins
+-- >>> let expr = Call (Var "seq") [Int 1,Int 2]
+-- >>> fst $ eval env expr
+-- Int 2
+--
+-- >>> let env = Map.fromList [(Var "x",Int 100)]
+-- >>> fst $ eval env (Var "x")
+-- Int 100
+--
+eval :: Map Expr Expr -> Expr -> (Expr, Map Expr Expr)
+eval env (Call f args) = eval env $ applyf f args
+eval env expr =
+  let expr' = maybe expr id $ Map.lookup expr env
+  in (expr', env)
+
+-- |
+-- Apply Function with Arguments
+--
+-- id : (-> x x)
+-- >>> applyf (Lambda [Var "x"] (Var "x")) [Int 10]
+-- Int 10
+--
+applyf :: Expr -> [Expr] -> Expr
+applyf (Lambda (x@(Var _):[]) y@(Var _)) args@(a:as)
+  | x == y      = a
+  | elem y args = y
+  | otherwise   = List []
 
 -- |
 -- Rename Variable identifier
