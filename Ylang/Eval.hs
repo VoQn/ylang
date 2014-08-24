@@ -27,25 +27,31 @@ import Ylang.Syntax
 -- "(+ x y 10)"
 --
 yexpr :: Expr -> String
-yexpr (Var v)      = v
-yexpr (Boolean b)  = if b then "Yes" else "No"
-yexpr (Int n)      = show n
-yexpr (Float f)    = show f
-yexpr (String s)   = s
-yexpr (Operator p) = p
+yexpr expr = case expr of
+  -- Atomic Value
+  Var      v -> v
+  Boolean  b -> if b then "Yes" else "No"
+  Int      n -> show n
+  Float    f -> show f
+  String   s -> s
+  Operator p -> p
 
-yexpr (List es)
-  = ('[':(yexpr' es)) ++ "]"
+  -- Collection
+  List es
+    -> '[' : (yexpr' es) ++ "]"
 
-yexpr (Lambda xs b)
-  = "(-> (" ++ (yexpr' xs) ++ ") " ++ (yexpr b) ++ ")"
+  -- Function
+  Lambda xs b
+    -> "(-> (" ++ (yexpr' xs) ++ ") " ++ (yexpr b) ++ ")"
 
-yexpr (Call f args)
-  = '(' : (yexpr f) ++ " " ++ (yexpr' args) ++ ")"
+  Call f args
+    -> '(' : (yexpr f) ++ " " ++ (yexpr' args) ++ ")"
 
-yexpr expr = show expr
+  -- Otherwise
+  _ -> show expr
 
-yexpr' (e:es) = intercalate " " $ map yexpr (e:es)
+  where
+  yexpr' = intercalate " " . map yexpr
 
 -- |
 -- Find Free Variables from Lambda Expression
