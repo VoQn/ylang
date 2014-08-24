@@ -1,7 +1,7 @@
 module Ylang.Eval where
 
 import Data.List as List (intercalate)
-import Data.Set ((\\), Set, fromList)
+import Data.Set ((\\), Set)
 import qualified Data.Set as Set
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -79,33 +79,34 @@ yexpr' (e:es) = intercalate " " $ map yexpr (e:es)
 -- fromList [Var "x"]
 --
 freeVars :: Expr -> Set Expr
-freeVars v@(Var _)
-  = Set.singleton v
+freeVars expr = case expr of
+  v@(Var _)
+    -> Set.singleton v
 
-freeVars (List l)
-  = freeVars' l
+  List es
+    -> collect es
 
-freeVars (Define name args expr)
-  = (freeVars expr) \\ (Set.insert (Var name)  $ freeVars' args)
+  Define name args expr'
+    -> (freeVars expr') \\ (Set.insert (Var name) $ collect args)
 
-freeVars (Lambda args expr)
-  = (freeVars expr) \\ (freeVars' args)
+  Lambda args expr'
+    -> (freeVars expr') \\ (collect args)
 
-freeVars (Call g@(Lambda _ _) args)
-  = Set.union (freeVars g) (freeVars' args)
+  Call f args -> case f of
+    g@(Lambda _ _)
+      -> Set.union (freeVars g) $ collect args
 
-freeVars (Call (Operator _) args)
-  = freeVars' args
+    Operator _
+      -> collect args
 
-freeVars (Call v@(Var _) args)
-  = Set.insert v $ freeVars' args
+    v@(Var _)
+      -> Set.insert v $ collect args
 
-freeVars expr = Set.empty
+  _ -- expression has not closed scope
+    -> Set.empty
 
-freeVars' exps = col Set.empty exps
   where
-  col rs []     = rs
-  col rs (v:vs) = col (Set.union (freeVars v) rs) vs
+  collect = foldr (Set.union . freeVars) Set.empty
 
 -- |
 -- Alpha Conversion for Lambda Calculus
