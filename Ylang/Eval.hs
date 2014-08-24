@@ -217,16 +217,27 @@ rename prefix index exprs
     [] -- target expression is empty
       -> reverse rs
 
-    (Var _):vs
-      -> let r = Var $ p ++ show i
-         in renames p (i + 1) (r:rs) vs
+    v@(Var _):vs
+      -> let (j, r) = rename' p i v
+         in renames p j (r:rs) vs
 
-    (List ys):vs
-      -> let r = List $ rename (p ++ (show i) ++ "_") 0 ys
-         in renames p (i + 1) (r:rs) vs
+    v@(List _):vs
+      -> let (j, r) = rename' p i v
+         in renames p j (r:rs) vs
 
-    x:vs -- Unable to rename case
-      -> renames p i (x:rs) vs
+    v:vs -- Unable to rename case
+      -> let (j, r) = rename' p i v
+         in renames p j (r:rs) vs
+
+  rename' :: String -> Int -> Expr -> (Int, Expr)
+  rename' p i ex = case ex of
+    Var _
+      -> (i + 1, Var $ p ++ show i)
+
+    List ys
+      -> (i + 1, List $ rename (p ++ (show i) ++ "_") 0 ys)
+
+    x -> (i, x)
 
 -- |
 --
