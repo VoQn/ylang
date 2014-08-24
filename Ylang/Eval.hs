@@ -1,7 +1,7 @@
 module Ylang.Eval where
 
 import Data.List as List (intercalate)
-import Data.Set ((\\), Set, fromList)
+import Data.Set ((\\), Set)
 import qualified Data.Set as Set
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -27,25 +27,31 @@ import Ylang.Syntax
 -- "(+ x y 10)"
 --
 yexpr :: Expr -> String
-yexpr (Var v)      = v
-yexpr (Boolean b)  = if b then "Yes" else "No"
-yexpr (Int n)      = show n
-yexpr (Float f)    = show f
-yexpr (String s)   = s
-yexpr (Operator p) = p
+yexpr expr = case expr of
+  -- Atomic Value
+  Var      v -> v
+  Boolean  b -> if b then "Yes" else "No"
+  Int      n -> show n
+  Float    f -> show f
+  String   s -> s
+  Operator p -> p
 
-yexpr (List es)
-  = ('[':(yexpr' es)) ++ "]"
+  -- Collection
+  List es
+    -> '[' : (yexpr' es) ++ "]"
 
-yexpr (Lambda xs b)
-  = "(-> (" ++ (yexpr' xs) ++ ") " ++ (yexpr b) ++ ")"
+  -- Function
+  Lambda xs b
+    -> "(-> (" ++ (yexpr' xs) ++ ") " ++ (yexpr b) ++ ")"
 
-yexpr (Call f args)
-  = '(' : (yexpr f) ++ " " ++ (yexpr' args) ++ ")"
+  Call f args
+    -> '(' : (yexpr f) ++ " " ++ (yexpr' args) ++ ")"
 
-yexpr expr = show expr
+  -- Otherwise
+  _ -> show expr
 
-yexpr' (e:es) = intercalate " " $ map yexpr (e:es)
+  where
+  yexpr' = intercalate " " . map yexpr
 
 -- |
 -- Find Free Variables from Lambda Expression
@@ -59,78 +65,94 @@ yexpr' (e:es) = intercalate " " $ map yexpr (e:es)
 -- fromList [Var "y"]
 --
 -- (-> (x y) [w,x,y,z]) ... [w,z]
--- >>> freeVars $ Lambda [Var "x",Var "y"] $ List [Var "w",Var "x",Var "y",Var "z"]
+-- >>> let args = [Var "x",Var "y"]
+-- >>> let expr = List [Var "w",Var "x",Var "y",Var "z"]
+-- >>> freeVars $ Lambda args expr
 -- fromList [Var "w",Var "z"]
 --
 -- (-> x (+ x 1))
--- >>> freeVars $ Lambda [Var "x"] $ Call (Operator "+") [Var "x",Int 1]
+-- >>> let args = [Var "x"]
+-- >>> let expr = Call (Operator "+") [Var "x",Int 1]
+-- >>> freeVars $ Lambda args expr
 -- fromList []
 --
 -- (-> x (+ y 1))
--- >>> freeVars $ Lambda [Var "x"] $ Call (Operator "+") [Var "y",Int 1]
+-- >>> let args = [Var "x"]
+-- >>> let expr = Call (Operator "+") [Var "y",Int 1]
+-- >>> freeVars $ Lambda args expr
 -- fromList [Var "y"]
 --
 -- ((-> y y) 1) ... []
--- >>> freeVars $ Call (Lambda [Var "y"] (Var "y")) [Int 1]
+-- >>> let func = Lambda [Var "y"] $ Var "y"
+-- >>> freeVars $ Call func [Int 1]
 -- fromList []
 --
 -- ((-> y x) 1) ... [x]
--- >>> freeVars $ Call (Lambda [Var "y"] (Var "x")) [Int 1]
+-- >>> let func = Lambda [Var "y"] $ Var "x"
+-- >>> freeVars $ Call func [Int 1]
 -- fromList [Var "x"]
 --
 freeVars :: Expr -> Set Expr
-freeVars v@(Var _)
-  = Set.singleton v
+freeVars expr = case expr of
+  v@(Var _)
+    -> Set.singleton v
 
-freeVars (List l)
-  = freeVars' l
+  List es
+    -> collect es
 
-freeVars (Define name args expr)
-  = (freeVars expr) \\ (Set.insert (Var name)  $ freeVars' args)
+  Define name args expr'
+    -> (freeVars expr') \\ (Set.insert (Var name) $ collect args)
 
-freeVars (Lambda args expr)
-  = (freeVars expr) \\ (freeVars' args)
+  Lambda args expr'
+    -> (freeVars expr') \\ (collect args)
 
-freeVars (Call g@(Lambda _ _) args)
-  = Set.union (freeVars g) (freeVars' args)
+  Call f args -> case f of
+    g@(Lambda _ _)
+      -> Set.union (freeVars g) $ collect args
 
-freeVars (Call (Operator _) args)
-  = freeVars' args
+    Operator _
+      -> collect args
 
-freeVars (Call v@(Var _) args)
-  = Set.insert v $ freeVars' args
+    v@(Var _)
+      -> Set.insert v $ collect args
 
-freeVars expr = Set.empty
+  _ -- expression has not closed scope
+    -> Set.empty
 
-freeVars' exps = col Set.empty exps
   where
-  col rs []     = rs
-  col rs (v:vs) = col (Set.union (freeVars v) rs) vs
+  collect = foldr (Set.union . freeVars) Set.empty
 
 -- |
 -- Alpha Conversion for Lambda Calculus
 --
+-- Convertable case:
 -- (-> x ((-> x x) x)) ... (-> y ((-> x x) y))
--- >>> alpha $ Lambda [Var "x"] (Call (Lambda [Var "x"] (Var "x")) [Var "x"])
+-- >>> let g = Lambda [Var "x"] $ Var "x"
+-- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
+-- >>> alpha $ f
 -- Lambda [Var "y_0"] (Call (Lambda [Var "x_0"] (Var "x_0")) [Var "y_0"])
 --
+-- Not-Convertable case:
 -- (-> x ((-> y x) x)) ... (-> x ((-> y x) x))
--- >>> alpha $ Lambda [Var "x"] (Call (Lambda [Var "y"] (Var "x")) [Var "x"])
+-- >>> let g = Lambda [Var "y"] $ Var "x"
+-- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
+-- >>> alpha $ f
 -- Lambda [Var "x"] (Call (Lambda [Var "y"] (Var "x")) [Var "x"])
 --
 alpha :: Expr -> Expr
-alpha f@(Lambda ys (Call g@(Lambda xs ex) zs))
-  | possible =
-      let
-        xs' = rename "x_" 0 [] xs
-        ys' = rename "y_" 0 [] ys
-        ex' = apply (Map.fromList $ zip xs xs') ex
-      in Lambda ys' $ Call (Lambda xs' ex') ys'
-  | otherwise = f
+alpha expr = case expr of
+  f@(Lambda ys (Call g@(Lambda xs ex) zs))
+    | hasNotOutScopeBind g ->
+        let
+          xs' = rename "x_" 0 [] xs
+          ys' = rename "y_" 0 [] ys
+          ex' = apply (Map.fromList $ zip xs xs') ex
+        in Lambda ys' $ Call (Lambda xs' ex') ys'
+    | otherwise -> f
+  _
+    -> expr
   where
-  possible = Set.null $ freeVars g
-
-alpha l = l
+  hasNotOutScopeBind g = Set.null $ freeVars g
 
 builtins :: Map Expr Expr
 builtins = Map.fromList
@@ -188,33 +210,38 @@ applyf (Lambda (x@(Var _):[]) y@(Var _)) args@(a:as)
 -- [List [Var "x_0_0",Var "x_0_1"],List [Var "x_1_0",Var "x_1_1"]]
 --
 rename :: String -> Int -> [Expr] -> [Expr] -> [Expr]
-rename _ _ rs []
-  = reverse rs
-rename p i rs (v@(Var _):vs)
-  = rename p (i + 1) ((Var $ p ++ show i) : rs) vs
-rename p i rs ((List l):vs)
-  = let
-      r = List $ rename (p ++ (show i) ++ "_") 0 [] l
-    in rename p (i + 1) (r:rs) vs
+rename p i rs es = case es of
+  []
+    -> reverse rs
+  v:vs
+    -> let (j, r) = rename' p i v
+       in rename p j (r:rs) vs
+  where
+  rename' :: String -> Int -> Expr -> (Int, Expr)
+  rename' q k ex = case ex of
+    Var _
+      -> (k + 1, Var $ q ++ show k)
+
+    List ys
+      -> (k + 1, List $ rename (q ++ (show k) ++ "_") 0 [] ys)
+
+    x -> (k, x)
 
 -- |
 --
--- >>> apply (Map.fromList [(Var "x",Int 1)]) $ Var "x"
+-- >>> let env = Map.fromList [(Var "x",Int 1)]
+-- >>> apply env $ Var "x"
 -- Int 1
 --
--- >>> apply (Map.fromList [(Var "x",Int 1)]) $ List [Var "x",Var "x"]
+-- >>> let env = Map.fromList [(Var "x",Int 1)]
+-- >>> apply env $ List [Var "x",Var "x"]
 -- List [Int 1,Int 1]
 --
 apply :: Map Expr Expr -> Expr -> Expr
-apply t v@(Var _) = maybe v id $ Map.lookup v t
-apply t (List xs) = List $ applyTraverse t xs []
-apply t (Call f args) = Call f $ applyTraverse t args []
+apply env expr = case expr of
+  v@(Var _) -> maybe v id $ Map.lookup v env
+  List xs   -> List $ map (apply env) xs
+  Call f args
+    -> Call f $ map (apply env) args
 
--- Other : Literal Value (Int 10, Float 0.5, String "foo", Boolean True)
-apply t v = v
-
--- |
--- Traversal Apply
-applyTraverse :: Map Expr Expr -> [Expr] -> [Expr] -> [Expr]
-applyTraverse t [] rs     = reverse rs
-applyTraverse t (v:vs) rs = applyTraverse t vs ((apply t v):rs)
+  _ -> expr
