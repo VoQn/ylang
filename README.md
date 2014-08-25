@@ -80,15 +80,15 @@ Scheme like, but it is **NOT** _Lisp family_
 (= y 20)
 
 (+ x 1)
-; (11 : Int)
+; (: 11 Int)
 
 (+ x y)
-; (30 : Int)
+; (: 30 Int)
 
 (((\ x) (+ x x)) 1)
-; (2 : Int)
+; (: 2 Int)
 (((\ x) (+ x y)) 1)
-; (21 : Int)
+; (: 21 Int)
 ```
 
 ### Declare, Define, Apply
@@ -98,7 +98,7 @@ Scheme like, but it is **NOT** _Lisp family_
 (= (length (, x xs)) (+ (length xs) 1))
 
 (length [1 2 3 4 5])
-; (5 : Int)
+; (: 5 Int)
 ```
 
 ## License
