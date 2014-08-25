@@ -25,9 +25,7 @@ topLevel :: Parser [S.Expr]
 topLevel = many $ factor
 
 expr :: Parser S.Expr
-expr = Ex.buildExpressionParser table term
-
-table = [[]]
+expr = Ex.buildExpressionParser [] term
 
 term :: Parser S.Expr
 term
@@ -44,49 +42,90 @@ factor
   <?> "Functional Expr"
 
 -- |
--- >>> parse declare "<stdin>" "(dec x Int)"
--- Right (x : Int)
+-- >>> parse declare "<stdin>" "(: x Int)"
+-- Right (: x Int)
 --
--- >>> parse declare "<stdin>" "(dec add (-> (Int Int) Int))"
--- Right (add : ((Int -> Int) -> Int))
+-- >>> parse declare "<stdin>" "(: add (-> (-> Int Int) Int))"
+-- Right (: (add Int Int) Int)
+--
+-- >>> parse declare "<stdin>" "(: (add Int Int) Int)"
+-- Right (: (add Int Int) Int)
 --
 declare :: Parser S.Expr
 declare = L.parens form <?> "Declaration Expression"
   where
-  form   = L.reserved "dec" *> (wrap <$> identifier <*> bind)
-  wrap i = uncurry $ S.Declare i
-  bind   = lambda <|> ((,) []) <$> targ
+  form = do
+    L.reservedOp ":"
+    (f:args) <- example <|> simple
+    ret      <- try arrow <|> variable
+    return $ normalize f args ret
+  example = L.parens $ many1 variable
+  simple  = (:[]) <$> variable
+  normalize f args ret = case ret of
+    S.Arrow args' ret'
+      -> S.Declare f (args ++ args') ret'
+    _
+      -> S.Declare f args ret
+
+arrow :: Parser S.Expr
+arrow = L.parens $ do
+  L.reservedOp "->"
+  tys <- many1 (try arrow <|> variable)
+  return $ normalize [] tys
+  where
+  normalize rs ts = case ts of
+    [] -> S.Arrow (reverse $ tail rs) (head rs)
+    t:ts' -> case t of
+      S.Arrow args ret
+        -> normalize (ret : (reverse args) ++ rs) ts'
+      _
+        -> normalize (t:rs) ts'
 
 -- |
 -- Parse Definition Syntax
 --
--- >>> parse define "<stdin>" "(def x 10)"
--- Right (x = 10)
+-- >>> parse define "<stdin>" "(= x 10)"
+-- Right (= x 10)
 --
--- >>> parse define "<stdin>" "(def seq (-> (x y) y))"
--- Right ((seq x y) = y)
+-- >>> parse define "<stdin>" "(= seq ((\\ x y) y))"
+-- Right (= (seq x y) y)
 --
--- >>> parse define "<stdin>" "(def add (-> (x y) (+ x y)))"
--- Right ((add x y) = (+ x y))
+-- >>> parse define "<stdin>" "(= add ((\\ x y) (+ x y)))"
+-- Right (= (add x y) (+ x y))
+--
+-- >>> parse define "<stdin>" "(= (f x y) y)"
+-- Right (= (f x y) y)
+--
+-- >>> parse define "<stdin>" "(= (f x y) (+ x y))"
+-- Right (= (f x y) (+ x y))
 --
 define :: Parser S.Expr
 define = L.parens form <?> "Definition Expression"
   where
-  form   = L.reserved "def" *> (wrap <$> identifier <*> bind)
-  wrap i = uncurry $ S.Define i
-  bind   = lambda <|> ((,) []) <$> expr
+  form = do
+    L.reservedOp "="
+    (f:args) <- example <|> simple
+    body <- expr
+    return $ normalize f args body
+  example = L.parens $ many1 variable
+  simple = (:[]) <$> variable
+  normalize f args body = case (args, body) of
+    ([], (S.Lambda args' body'))
+      -> S.Define f args' body'
+    _
+      -> S.Define f args body
 
 -- |
 -- Parse Closure Syntax
 --
--- >>> parse closure "<stdin>" "(-> x x)"
--- Right (x -> x)
+-- >>> parse closure "<stdin>" "((\\ x) x)"
+-- Right ((\ x) x)
 --
--- >>> parse closure "<stdin>" "(-> x [x])"
--- Right (x -> [x])
+-- >>> parse closure "<stdin>" "((\\ x) [x])"
+-- Right ((\ x) [x])
 --
 closure :: Parser S.Expr
-closure = form <?> "(-> {ARGS} {BODY})"
+closure = form <?> "((-> {ARGS}) {BODY})"
   where
   form = uncurry S.Lambda <$> lambda
 
@@ -99,17 +138,17 @@ targ
 -- |
 -- Parse Lambda Expression
 --
--- >>> parse lambda "<stdin>" "(-> x x)"
+-- >>> parse lambda "<stdin>" "((\\ x) x)"
 -- Right ([x],x)
 --
--- >>> parse lambda "<stdin>" "(-> (x y) z)"
+-- >>> parse lambda "<stdin>" "((\\ x y) z)"
 -- Right ([x,y],z)
 --
 lambda :: Parser ([S.Expr], S.Expr)
 lambda = L.parens form <?> "Lambda Expression"
   where
-  form = L.reservedOp "->" *> ((,) <$> args <*> expr)
-  args = (L.parens $ many1 targ) <|> ((:[]) <$> targ)
+  form = (,) <$> args <*> expr
+  args = L.parens $ L.reservedOp "\\" >> many1 targ
 
 -- |
 -- Parse Function Call (f x y z ...)

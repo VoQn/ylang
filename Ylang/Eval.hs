@@ -48,27 +48,27 @@ import Ylang.Syntax
 --
 freeVars :: Expr -> Set Expr
 freeVars expr = case expr of
-  v@(Var _)
-    -> Set.singleton v
+  Var _
+    -> Set.singleton expr
 
   List es
     -> collect es
 
-  Define name args expr'
-    -> (freeVars expr') \\ (Set.insert (Var name) $ collect args)
+  Define f args expr'
+    -> (freeVars expr') \\ (Set.union (freeVars f) $ collect args)
 
   Lambda args expr'
     -> (freeVars expr') \\ (collect args)
 
   Call f args -> case f of
-    g@(Lambda _ _)
-      -> Set.union (freeVars g) $ collect args
+    Lambda _ _
+      -> Set.union (freeVars f) $ collect args
 
     Operator _
       -> collect args
 
-    v@(Var _)
-      -> Set.insert v $ collect args
+    Var _
+      -> Set.insert f $ collect args
 
     Call g args'
       -> Set.union (freeVars g) $ collect args'
@@ -88,14 +88,14 @@ freeVars expr = case expr of
 -- >>> let g = Lambda [Var "x"] $ Var "x"
 -- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
 -- >>> alpha $ f
--- (y_0 -> ((x_0 -> x_0) y_0))
+-- ((\ y_0) (((\ x_0) x_0) y_0))
 --
 -- Not-Convertable case:
 -- (-> x ((-> y x) x)) ... (-> x ((-> y x) x))
 -- >>> let g = Lambda [Var "y"] $ Var "x"
 -- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
 -- >>> alpha $ f
--- (x -> ((y -> x) x))
+-- ((\ x) (((\ y) x) x))
 --
 alpha :: Expr -> Expr
 alpha expr = case expr of

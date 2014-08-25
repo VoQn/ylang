@@ -13,7 +13,7 @@ lexer = Token.makeTokenParser style
       , Token.reservedNames   = keywords
     }
     commentLine = ";"
-    operators   = ["+", "-", "*", "/", "->", ",", ".", ":"]
+    operators   = ["+", "-", "*", "/", "=", "\\", "->", ",", ".", ":"]
     keywords    = ["dec", "def", "let", "var"]
 
 integer = Token.integer lexer
