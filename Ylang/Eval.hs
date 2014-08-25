@@ -1,57 +1,11 @@
 module Ylang.Eval where
 
-import Data.List as List (intercalate)
 import Data.Set ((\\), Set)
 import qualified Data.Set as Set
 import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Ylang.Syntax
-
--- |
--- Show code typing by User
---
--- >>> yexpr $ Int 1
--- "1"
---
--- >>> yexpr $ Float 0.5
--- "0.5"
---
--- >>> yexpr $ List [Int 1,Int 2,Int 3]
--- "[1 2 3]"
---
--- >>> yexpr $ Lambda [Var "x"] (Var "x")
--- "(-> (x) x)"
---
--- >>> yexpr $ Call (Operator "+") [Var "x",Var "y",Int 10]
--- "(+ x y 10)"
---
-yexpr :: Expr -> String
-yexpr expr = case expr of
-  -- Atomic Value
-  Var      v -> v
-  Boolean  b -> if b then "Yes" else "No"
-  Int      n -> show n
-  Float    f -> show f
-  String   s -> s
-  Operator p -> p
-
-  -- Collection
-  List es
-    -> '[' : (yexpr' es) ++ "]"
-
-  -- Function
-  Lambda xs b
-    -> "(-> (" ++ (yexpr' xs) ++ ") " ++ (yexpr b) ++ ")"
-
-  Call f args
-    -> '(' : (yexpr f) ++ " " ++ (yexpr' args) ++ ")"
-
-  -- Otherwise
-  _ -> show expr
-
-  where
-  yexpr' = intercalate " " . map yexpr
 
 -- |
 -- Find Free Variables from Lambda Expression
@@ -62,13 +16,13 @@ yexpr expr = case expr of
 --
 -- (-> x y) ... [y]
 -- >>> freeVars $ Lambda [Var "x"] (Var "y")
--- fromList [Var "y"]
+-- fromList [y]
 --
 -- (-> (x y) [w,x,y,z]) ... [w,z]
 -- >>> let args = [Var "x",Var "y"]
 -- >>> let expr = List [Var "w",Var "x",Var "y",Var "z"]
 -- >>> freeVars $ Lambda args expr
--- fromList [Var "w",Var "z"]
+-- fromList [w,z]
 --
 -- (-> x (+ x 1))
 -- >>> let args = [Var "x"]
@@ -80,7 +34,7 @@ yexpr expr = case expr of
 -- >>> let args = [Var "x"]
 -- >>> let expr = Call (Operator "+") [Var "y",Int 1]
 -- >>> freeVars $ Lambda args expr
--- fromList [Var "y"]
+-- fromList [y]
 --
 -- ((-> y y) 1) ... []
 -- >>> let func = Lambda [Var "y"] $ Var "y"
@@ -90,7 +44,7 @@ yexpr expr = case expr of
 -- ((-> y x) 1) ... [x]
 -- >>> let func = Lambda [Var "y"] $ Var "x"
 -- >>> freeVars $ Call func [Int 1]
--- fromList [Var "x"]
+-- fromList [x]
 --
 freeVars :: Expr -> Set Expr
 freeVars expr = case expr of
@@ -134,14 +88,14 @@ freeVars expr = case expr of
 -- >>> let g = Lambda [Var "x"] $ Var "x"
 -- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
 -- >>> alpha $ f
--- Lambda [Var "y_0"] (Call (Lambda [Var "x_0"] (Var "x_0")) [Var "y_0"])
+-- (y_0 -> ((x_0 -> x_0) y_0))
 --
 -- Not-Convertable case:
 -- (-> x ((-> y x) x)) ... (-> x ((-> y x) x))
 -- >>> let g = Lambda [Var "y"] $ Var "x"
 -- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
 -- >>> alpha $ f
--- Lambda [Var "x"] (Call (Lambda [Var "y"] (Var "x")) [Var "x"])
+-- (x -> ((y -> x) x))
 --
 alpha :: Expr -> Expr
 alpha expr = case expr of
@@ -170,17 +124,17 @@ builtins = Map.fromList
 --
 -- >>> let env = Map.empty
 -- >>> fst $ eval env (Var "x")
--- Var "x"
+-- x
 --
 -- >>> let env  = Map.empty
 -- >>> let func = Lambda [Var "x"] (Var "x")
 -- >>> let expr = Call func [Var "y"]
 -- >>> fst $ eval Map.empty expr
--- Var "y"
+-- y
 --
 -- >>> let env = Map.fromList [(Var "x",Int 100)]
 -- >>> fst $ eval env (Var "x")
--- Int 100
+-- 100
 --
 eval :: Map Expr Expr -> Expr -> (Expr, Map Expr Expr)
 eval env (Call f args) = eval env $ applyf f args
@@ -193,7 +147,7 @@ eval env expr =
 --
 -- id : (-> x x)
 -- >>> applyf (Lambda [Var "x"] (Var "x")) [Int 10]
--- Int 10
+-- 10
 --
 applyf :: Expr -> [Expr] -> Expr
 applyf expr args = case expr of
@@ -208,12 +162,12 @@ applyf expr args = case expr of
 --
 -- >>> let vars = [Var "foo",Var "bar"]
 -- >>> rename "x_" 0 [] vars
--- [Var "x_0",Var "x_1"]
+-- [x_0,x_1]
 --
 -- >>> let a_list = List [Var "a",Var "b"]
 -- >>> let b_list = List [Var "c",Var "d"]
 -- >>> rename "x_" 0 [] [a_list, b_list]
--- [List [Var "x_0_0",Var "x_0_1"],List [Var "x_1_0",Var "x_1_1"]]
+-- [[x_0_0 x_0_1],[x_1_0 x_1_1]]
 --
 rename :: String -> Int -> [Expr] -> [Expr] -> [Expr]
 rename p i rs es = case es of
@@ -237,11 +191,11 @@ rename p i rs es = case es of
 --
 -- >>> let env = Map.fromList [(Var "x",Int 1)]
 -- >>> apply env $ Var "x"
--- Int 1
+-- 1
 --
 -- >>> let env = Map.fromList [(Var "x",Int 1)]
 -- >>> apply env $ List [Var "x",Var "x"]
--- List [Int 1,Int 1]
+-- [1 1]
 --
 apply :: Map Expr Expr -> Expr -> Expr
 apply env expr = case expr of

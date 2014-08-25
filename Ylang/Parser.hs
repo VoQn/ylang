@@ -45,10 +45,10 @@ factor
 
 -- |
 -- >>> parse declare "<stdin>" "(dec x Int)"
--- Right (Declare "x" [] (Var "Int"))
+-- Right (x : Int)
 --
 -- >>> parse declare "<stdin>" "(dec add (-> (Int Int) Int))"
--- Right (Declare "add" [Var "Int",Var "Int"] (Var "Int"))
+-- Right (add : ((Int -> Int) -> Int))
 --
 declare :: Parser S.Expr
 declare = L.parens form <?> "Declaration Expression"
@@ -61,13 +61,13 @@ declare = L.parens form <?> "Declaration Expression"
 -- Parse Definition Syntax
 --
 -- >>> parse define "<stdin>" "(def x 10)"
--- Right (Define "x" [] (Int 10))
+-- Right (x = 10)
 --
 -- >>> parse define "<stdin>" "(def seq (-> (x y) y))"
--- Right (Define "seq" [Var "x",Var "y"] (Var "y"))
+-- Right ((seq x y) = y)
 --
 -- >>> parse define "<stdin>" "(def add (-> (x y) (+ x y)))"
--- Right (Define "add" [Var "x",Var "y"] (Call (Operator "+") [Var "x",Var "y"]))
+-- Right ((add x y) = (+ x y))
 --
 define :: Parser S.Expr
 define = L.parens form <?> "Definition Expression"
@@ -80,10 +80,10 @@ define = L.parens form <?> "Definition Expression"
 -- Parse Closure Syntax
 --
 -- >>> parse closure "<stdin>" "(-> x x)"
--- Right (Lambda [Var "x"] (Var "x"))
+-- Right (x -> x)
 --
 -- >>> parse closure "<stdin>" "(-> x [x])"
--- Right (Lambda [Var "x"] (List [Var "x"]))
+-- Right (x -> [x])
 --
 closure :: Parser S.Expr
 closure = form <?> "(-> {ARGS} {BODY})"
@@ -100,10 +100,10 @@ targ
 -- Parse Lambda Expression
 --
 -- >>> parse lambda "<stdin>" "(-> x x)"
--- Right ([Var "x"],Var "x")
+-- Right ([x],x)
 --
 -- >>> parse lambda "<stdin>" "(-> (x y) z)"
--- Right ([Var "x",Var "y"],Var "z")
+-- Right ([x,y],z)
 --
 lambda :: Parser ([S.Expr], S.Expr)
 lambda = L.parens form <?> "Lambda Expression"
@@ -115,13 +115,13 @@ lambda = L.parens form <?> "Lambda Expression"
 -- Parse Function Call (f x y z ...)
 --
 -- >>> parse call "<stdin>" "(+)"
--- Right (Call (Operator "+") [])
+-- Right (+)
 --
 -- >>> parse call "<stdin>" "(+ 1 2 3)"
--- Right (Call (Operator "+") [Int 1,Int 2,Int 3])
+-- Right (+ 1 2 3)
 --
 -- >>> parse call "<stdin>" "(+ x y z)"
--- Right (Call (Operator "+") [Var "x",Var "y",Var "z"])
+-- Right (+ x y z)
 --
 call :: Parser S.Expr
 call = L.parens form <?> "({CALL_FUNCTION} [{ARGS}])"
@@ -140,16 +140,16 @@ caller
 -- Parse Variables
 --
 -- >>> parse variable "<stdin>" "x"
--- Right (Var "x")
+-- Right x
 --
 -- >>> parse variable "<stdin>" "empty?"
--- Right (Var "empty?")
+-- Right empty?
 --
 -- >>> parse variable "<stdin>" "add#"
--- Right (Var "add#")
+-- Right add#
 --
 -- >>> parse variable "<stdin>" "x->string"
--- Right (Var "x->string")
+-- Right x->string
 --
 variable :: Parser S.Expr
 variable = S.Var <$> identifier
@@ -158,7 +158,7 @@ variable = S.Var <$> identifier
 -- Parse Operator
 --
 -- >>> parse operator "<stdin>" "+"
--- Right (Operator "+")
+-- Right +
 --
 operator :: Parser S.Expr
 operator = S.Operator <$> many1 symbol <* many space
@@ -202,16 +202,16 @@ collection
 -- Parse list literal [[], [1 2 3 4], [x y z] ...]
 --
 -- >>> parse list "<stdin>" "[]"
--- Right (List [])
+-- Right []
 --
 -- >>> parse list "<stdin>" "[1 2 3]"
--- Right (List [Int 1,Int 2,Int 3])
+-- Right [1 2 3]
 --
 -- >>> parse list "<stdin>" "[x y z]"
--- Right (List [Var "x",Var "y",Var "z"])
+-- Right [x y z]
 --
 -- >>> parse list "<stdin>" "[xyz (seq y)]"
--- Right (List [Var "xyz",Call (Var "seq") [Var "y"]])
+-- Right [xyz (seq y)]
 --
 list :: Parser S.Expr
 list = L.brackets $ S.List <$> many expr
@@ -220,13 +220,13 @@ list = L.brackets $ S.List <$> many expr
 -- Parse integer number [...-2 -1, 0, 1 2 ...]
 --
 -- >>> parse int "<stdin>" "0"
--- Right (Int 0)
+-- Right 0
 --
 -- >>> parse int "<stdin>" "-2"
--- Right (Int (-2))
+-- Right -2
 --
 -- >>> parse int "<stdin>" "0xff"
--- Right (Int 255)
+-- Right 255
 --
 int :: Parser S.Expr
 int = S.Int <$> L.integer
@@ -235,13 +235,13 @@ int = S.Int <$> L.integer
 -- Parse flaoting point number [... -1.0 -0.5 0.0 0.5 1.0 ...]
 --
 -- >>> parse float "<stdin>" "0.0"
--- Right (Float 0.0)
+-- Right 0.0
 --
 -- >>> parse float "<stdin>" "0.5"
--- Right (Float 0.5)
+-- Right 0.5
 --
 -- >>> parse float "<stdin>" "-0.5"
--- Right (Float (-0.5))
+-- Right -0.5
 --
 float :: Parser S.Expr
 float = wrap <$> signed <*> L.float
@@ -253,25 +253,25 @@ float = wrap <$> signed <*> L.float
 -- |
 -- Parse boolean identifier [Yes/No]
 --
--- >>> parse bool "<stdin>" "Yes"
--- Right (Boolean True)
+-- >>> parse bool "<stdin>" "#t"
+-- Right #t
 --
--- >>> parse bool "<stdin>" "No"
--- Right (Boolean False)
+-- >>> parse bool "<stdin>" "#f"
+-- Right #f
 --
 bool :: Parser S.Expr
-bool = S.Boolean <$> ("Yes" ?> True <|> "No" ?> False)
+bool = S.Boolean <$> ("#t" ?> True <|> "#f" ?> False)
   where
-  k ?> r = string k >> return r
+  k ?> r = try (string k) >> return r
 
 -- |
 -- Parse String literal
 --
 -- >>> parse str "<stdin>" "\"\""
--- Right (String "")
+-- Right ""
 --
 -- >>> parse str "<stdin>" "\"Hello!\""
--- Right (String "Hello!")
+-- Right "Hello!"
 --
 str :: Parser S.Expr
 str = S.String <$> L.strings

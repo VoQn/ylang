@@ -19,5 +19,5 @@ spec = do
     it "evaluate boolean value (Yes)" $
       fst (eval Map.empty (Boolean True)) `shouldBe` (Boolean True)
 
-    it "evaluate boolean value (Yes)" $
+    it "evaluate boolean value (No)" $
       fst (eval Map.empty (Boolean False)) `shouldBe` (Boolean False)
