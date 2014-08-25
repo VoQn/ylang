@@ -148,7 +148,7 @@ lambda :: Parser ([S.Expr], S.Expr)
 lambda = L.parens form <?> "Lambda Expression"
   where
   form = (,) <$> args <*> expr
-  args = (L.parens $ L.reservedOp "\\" >> many1 targ) <|> ((:[]) <$> targ)
+  args = L.parens $ L.reservedOp "\\" >> many1 targ
 
 -- |
 -- Parse Function Call (f x y z ...)
