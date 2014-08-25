@@ -14,8 +14,9 @@ data Expr
   | Boolean  Bool
   | Call     Expr    [Expr]
   | Lambda   [Expr]  Expr
-  | Define   Name    [Expr]  Expr
-  | Declare  Name    [Expr]  Expr
+  | Arrow    [Expr]  Expr
+  | Define   Expr    [Expr]  Expr
+  | Declare  Expr    [Expr]  Expr
   deriving (Eq, Ord)
 
 instance Show Expr where
@@ -27,32 +28,26 @@ instance Show Expr where
     String  str -> '"' : str ++ "\""
     Boolean b | b -> "#t" | otherwise -> "#f"
 
-    List es -> '[' : showl es ++ "]"
+    List es -> '[' : showl " " es ++ "]"
 
-    Call e1 []
-      -> '(' : show e1 ++ ")"
-    Call e1 e2
-      -> '(' : show e1 ++ " " ++ showl e2 ++ ")"
+    Call e1 e2 -> case e2 of
+      [] -> '(' : show e1 ++ ")"
+      _  -> '(' : show e1 ++ " " ++ showl " " e2 ++ ")"
 
-    Lambda as e -> case as of
-      [a]
-        -> '(' : show a ++ " -> " ++ show e ++ ")"
-      _
-        -> "((" ++ showl as ++ ") -> " ++ show e ++ ")"
+    Lambda as e
+      -> "((\\ " ++ showl " " as ++ ") " ++ show e ++ ")"
+
+    Arrow as r -> case as of
+      [] -> "(-> () " ++ show r ++ ")"
+      _  -> "(-> " ++ showl " " as ++ " " ++ show r ++ ")"
 
     Define n as e -> case as of
-      []
-        -> '(' : n ++ " = " ++ show e ++ ")"
-      _
-        -> "((" ++ n ++ " " ++ showl as ++ ") = " ++ show e ++ ")"
+      [] -> "(= " ++ show n ++ " " ++ show e ++ ")"
+      _  -> "(= (" ++ show n ++ " " ++ showl " " as ++ ") " ++ show e ++ ")"
 
     Declare n as e -> case as of
-      []
-        -> '(' : n ++ " : " ++ show e ++ ")"
-      [a]
-        -> '(' : n ++ " : (" ++ show a ++ " -> " ++ show e ++ "))"
-      _
-        -> '(' : n ++ " : ((" ++ (intercalate " -> " $ map show as) ++ ") -> " ++ show e ++ "))"
+      [] -> "(: " ++ show n ++ " " ++ show e ++ ")"
+      _  -> "(: (" ++ show n ++ " " ++ showl " " as ++ ") " ++ show e ++ ")"
 
     where
-    showl = intercalate " " . map show
+    showl s = intercalate s . map show

@@ -54,8 +54,8 @@ freeVars expr = case expr of
   List es
     -> collect es
 
-  Define name args expr'
-    -> (freeVars expr') \\ (Set.insert (Var name) $ collect args)
+  Define f args expr'
+    -> (freeVars expr') \\ (Set.union (freeVars f) $ collect args)
 
   Lambda args expr'
     -> (freeVars expr') \\ (collect args)
@@ -88,14 +88,14 @@ freeVars expr = case expr of
 -- >>> let g = Lambda [Var "x"] $ Var "x"
 -- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
 -- >>> alpha $ f
--- (y_0 -> ((x_0 -> x_0) y_0))
+-- ((\ y_0) (((\ x_0) x_0) y_0))
 --
 -- Not-Convertable case:
 -- (-> x ((-> y x) x)) ... (-> x ((-> y x) x))
 -- >>> let g = Lambda [Var "y"] $ Var "x"
 -- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
 -- >>> alpha $ f
--- (x -> ((y -> x) x))
+-- ((\ x) (((\ y) x) x))
 --
 alpha :: Expr -> Expr
 alpha expr = case expr of
