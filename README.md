@@ -1,5 +1,7 @@
 # ylang : Programming Language
 Scheme like, but it is **NOT** _Lisp family_
+
+## Build Status
 [![Build Status](https://travis-ci.org/VoQn/ylang.svg?branch=master)](https://travis-ci.org/VoQn/ylang)
 
 ## Motivation
