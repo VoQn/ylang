@@ -26,7 +26,7 @@ instance Show Expr where
     Int     num -> show num
     Float   num -> show num
     String  str -> '"' : str ++ "\""
-    Boolean b | b -> "#t" | otherwise -> "#f"
+    Boolean b | b -> "yes" | otherwise -> "no"
 
     List es -> '[' : showl " " es ++ "]"
 

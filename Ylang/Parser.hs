@@ -292,14 +292,14 @@ float = wrap <$> signed <*> L.float
 -- |
 -- Parse boolean identifier [Yes/No]
 --
--- >>> parse bool "<stdin>" "#t"
--- Right #t
+-- >>> parse bool "<stdin>" "yes"
+-- Right yes
 --
--- >>> parse bool "<stdin>" "#f"
--- Right #f
+-- >>> parse bool "<stdin>" "no"
+-- Right no
 --
 bool :: Parser S.Expr
-bool = S.Boolean <$> ("#t" ?> True <|> "#f" ?> False)
+bool = S.Boolean <$> ("yes" ?> True <|> "no" ?> False)
   where
   k ?> r = try (string k) >> return r
 
