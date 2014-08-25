@@ -48,8 +48,8 @@ import Ylang.Syntax
 --
 freeVars :: Expr -> Set Expr
 freeVars expr = case expr of
-  v@(Var _)
-    -> Set.singleton v
+  Var _
+    -> Set.singleton expr
 
   List es
     -> collect es
@@ -61,14 +61,14 @@ freeVars expr = case expr of
     -> (freeVars expr') \\ (collect args)
 
   Call f args -> case f of
-    g@(Lambda _ _)
-      -> Set.union (freeVars g) $ collect args
+    Lambda _ _
+      -> Set.union (freeVars f) $ collect args
 
     Operator _
       -> collect args
 
-    v@(Var _)
-      -> Set.insert v $ collect args
+    Var _
+      -> Set.insert f $ collect args
 
     Call g args'
       -> Set.union (freeVars g) $ collect args'
