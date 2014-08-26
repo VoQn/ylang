@@ -78,7 +78,7 @@ spec = do
 
     let case1 = 0 % 1 :: Rational
     it "can parse (0/1)" $
-      Parse.ratio <? S.showRatio case1 `shouldBeParse` Syntax.Ratio case1
+      Parse.ratio <? Syntax.showRatio case1 `shouldBeParse` Syntax.Ratio case1
 
   describe "string literal parser" $ do
 
