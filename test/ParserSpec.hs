@@ -82,5 +82,77 @@ spec = do
 
   describe "string literal parser" $ do
 
-    it "can parse (\"Hello\")" $
+    it "can parse string : \"Hello\"" $
       Parse.str <? "\"Hello\"" `shouldBeParse` Syntax.String "Hello"
+
+  describe "variable parser" $ do
+
+    it "can parse : x" $
+      Parse.variable <? "x" `shouldBeParse` Syntax.Var "x"
+
+  describe "operator parser" $ do
+
+    it "can parse (+)" $
+      Parse.operator <? "+" `shouldBeParse` Syntax.Operator "+"
+
+  describe "atom parser" $ do
+
+    it "can parse boolean : yes" $
+      Parse.atom <? "yes" `shouldBeParse` Syntax.Boolean (True)
+
+    it "can parse integer : 0" $
+      Parse.atom <? "0" `shouldBeParse` Syntax.Int (0 :: Integer)
+
+    it "can parse floating number : 0.5" $
+      Parse.atom <? "0.5" `shouldBeParse` Syntax.Float (0.5 :: Double)
+
+    it "can parse string : \"value\"" $
+      Parse.atom <? "\"value\"" `shouldBeParse` Syntax.String "value"
+
+    it "can parse operator : (*)" $
+      Parse.atom <? "*" `shouldBeParse` Syntax.Operator "*"
+
+    it "can parse varibale : `named`" $
+      Parse.atom <? "named" `shouldBeParse` Syntax.Var "named"
+
+  describe "collection parser" $ do
+
+    it "can parse empty list : []" $
+      Parse.collection <? "[]" `shouldBeParse` Syntax.List []
+
+  describe "definition parser" $ do
+
+    it "can parse simple definition : (= x yes)" $
+      Parse.define <? "(= x no)" `shouldBeParse`
+      Syntax.Define (Syntax.Var "x") [] (Syntax.Boolean False)
+
+    it "can parse function definition : (= (id x) x)" $
+      Parse.define <? "(= (id x) x)" `shouldBeParse`
+      Syntax.Define (Syntax.Var "id") [Syntax.Var "x"] (Syntax.Var "x")
+
+    it "can parse definition (has nested expression) : (= (f x) (+ x 1))" $
+      Parse.define <? "(= (f x) (+ x 1))" `shouldBeParse`
+      Syntax.Define (Syntax.Var "f")
+                    [Syntax.Var "x"]
+                    (Syntax.Call (Syntax.Operator "+")
+                                 [Syntax.Var "x", Syntax.Int 1])
+
+    it "can parse lambda style definition : (= seq ((\\ x y) y))" $
+      Parse.define <? "(= seq ((\\ x y) y))" `shouldBeParse`
+      Syntax.Define (Syntax.Var "seq")
+                    [Syntax.Var "x", Syntax.Var "y"]
+                    (Var "y")
+
+  describe "declaration parser" $ do
+
+    it "can parse simple declaration : (: zero Int)" $
+      Parse.declare <? "(: zero Int)" `shouldBeParse`
+      Syntax.Declare (Var "zero") [] (Var "Int")
+
+    it "can parse function declaration : (: (f a) a)" $
+      Parse.declare <? "(: (f a) a)" `shouldBeParse`
+      Syntax.Declare (Var "f") [Var "a"] (Var "a")
+
+    it "can parse arrow type declaration : (: f (-> a a))" $
+      Parse.declare <? "(: f (-> a a))" `shouldBeParse`
+      Syntax.Declare (Var "f") [Var "a"] (Var "a")

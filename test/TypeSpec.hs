@@ -11,6 +11,9 @@ spec = do
     it "Bool type" $
       show TyBool `shouldBe` "Bool"
 
+    it "Integer type" $
+      show TyInt `shouldBe` "Int"
+
     it "Alpha type" $
       (show $ TyVar 1) `shouldBe` "a1"
 
