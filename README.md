@@ -1,4 +1,4 @@
-# ylang [![Build Status](http://img.shields.io/travis/VoQn/ylang.svg?style=flat-square)](https://travis-ci.org/VoQn/ylang) [![Gitter](http://img.shields.io/badge/discuss-Gitter-brightgreen.svg?style=flat-square)](https://gitter.im/VoQn/ylang) [![Apache 2 License](http://img.shields.io/badge/license-Apache_2-brightgreen.svg?style=flat-square)](https://tldrlegal.com/license/apache-license-2.0-(apache-2.0)
+# ylang [![Build Status](http://img.shields.io/travis/VoQn/ylang.svg?style=flat-square)](https://travis-ci.org/VoQn/ylang) [![Gitter](http://img.shields.io/badge/discuss-Gitter-brightgreen.svg?style=flat-square)](https://gitter.im/VoQn/ylang) [![Apache 2 License](http://img.shields.io/badge/license-Apache_2-brightgreen.svg?style=flat-square)](https://tldrlegal.com/license/apache-license-2.0-(apache-2.0))
 ylang is Programming Language. Scheme like, but it is *NOT* _Lisp family_
 
 ## Motivation
