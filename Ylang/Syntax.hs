@@ -16,7 +16,7 @@ data Expr
   | Boolean  Bool
   | Call     Expr    [Expr]
   | Lambda   [Expr]  Expr
-  | Arrow    [Expr]  Expr
+  | Arrow    Expr    [Expr]  Expr
   | Define   Expr    [Expr]  Expr
   | Declare  Expr    [Expr]  Expr
   deriving (Eq, Ord)
@@ -41,9 +41,8 @@ instance Show Expr where
     Lambda as e
       -> "((\\ " ++ showl " " as ++ ") " ++ show e ++ ")"
 
-    Arrow as r -> case as of
-      [] -> "(-> () " ++ show r ++ ")"
-      _  -> "(-> " ++ showl " " as ++ " " ++ show r ++ ")"
+    Arrow i as r
+      -> "(-> " ++ showl " " (i : as ++ [r]) ++ ")"
 
     Define n as e -> case as of
       [] -> "(= "  ++ showl " " (n:[e]) ++ ")"
