@@ -74,10 +74,13 @@ arrow = L.parens $ do
   return $ normalize [] tys
   where
   normalize rs ts = case ts of
-    [] -> S.Arrow (reverse $ tail rs) (head rs)
+    [] -> let
+            r = head rs
+            rs' = reverse $ tail rs
+          in S.Arrow rs' r
     t:ts' -> case t of
       S.Arrow args ret
-        -> normalize (ret : (reverse args) ++ rs) ts'
+        -> normalize (ret : reverse args ++ rs) ts'
       _
         -> normalize (t:rs) ts'
 
