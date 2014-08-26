@@ -30,10 +30,17 @@ expr :: Parser S.Expr
 expr = Ex.buildExpressionParser [] term
 
 term :: Parser S.Expr
-term = try factor <|> try atom <|> collection
+term
+   =  try factor
+  <|> try atom
+  <|> collection
 
 factor :: Parser S.Expr
-factor = try declare <|> try define <|> try closure <|> call
+factor
+   =  try declare
+  <|> try define
+  <|> try closure
+  <|> call
   <?> "Functional Expr"
 
 -- |
@@ -46,7 +53,8 @@ factor = try declare <|> try define <|> try closure <|> call
 -- >>> parse declare "<stdin>" "(: add (-> (-> Int Int) Int))"
 -- Right (: (add Int Int) Int)
 declare :: Parser S.Expr
-declare = L.parens form <?> "Declaration Expression"
+declare = L.parens form
+  <?> "Declaration Expression"
   where
   form = do
     L.reservedOp ":"
@@ -63,10 +71,11 @@ declare = L.parens form <?> "Declaration Expression"
       -> S.Declare f args ret
 
 arrow :: Parser S.Expr
-arrow = L.parens $ do
-  L.reservedOp "->"
-  ts <- many1 (try arrow <|> variable)
-  return $ normalize [] ts
+arrow
+  = L.parens $ do
+    L.reservedOp "->"
+    ts <- many1 (try arrow <|> variable)
+    return $ normalize [] ts
   where
   normalize rs ts = case ts of
     []
@@ -93,7 +102,9 @@ arrow = L.parens $ do
 -- >>> parse define "<stdin>" "(= (f x y) (+ x y))"
 -- Right (= (f x y) (+ x y))
 define :: Parser S.Expr
-define = L.parens form <?> "Definition Expression"
+define
+   = L.parens form
+  <?> "Definition Expression"
   where
   form = do
     L.reservedOp "="
@@ -115,12 +126,15 @@ define = L.parens form <?> "Definition Expression"
 -- >>> parse closure "<stdin>" "((\\ x) [x])"
 -- Right ((\ x) [x])
 closure :: Parser S.Expr
-closure = form <?> "((-> {ARGS}) {BODY})"
-  where
-  form = uncurry S.Lambda <$> lambda
+closure
+   = (uncurry S.Lambda <$> lambda)
+  <?> "((-> {ARGS}) {BODY})"
 
 targ :: Parser S.Expr
-targ = try variable <|> try list <?> "Type Expression"
+targ
+   =  try variable
+  <|> try list
+  <?> "Type Expression"
 
 -- |
 -- Parse Lambda Expression
@@ -129,7 +143,9 @@ targ = try variable <|> try list <?> "Type Expression"
 -- >>> parse lambda "<stdin>" "((\\ x y) z)"
 -- Right ([x,y],z)
 lambda :: Parser ([S.Expr], S.Expr)
-lambda = L.parens form <?> "Lambda Expression"
+lambda
+   = L.parens form
+  <?> "Lambda Expression"
   where
   form = (,) <$> args <*> expr
   args = L.parens $ L.reservedOp "\\" >> many1 targ
@@ -143,13 +159,18 @@ lambda = L.parens form <?> "Lambda Expression"
 -- >>> parse call "<stdin>" "(+ x y z)"
 -- Right (+ x y z)
 call :: Parser S.Expr
-call = L.parens form <?> "({CALL_FUNCTION} [{ARGS}])"
+call = L.parens form
+  <?> "({CALL_FUNCTION} [{ARGS}])"
   where
   form = S.Call <$> caller <*> args
   args = (try $ many expr) <|> return []
 
 caller :: Parser S.Expr
-caller = try variable <|> try operator <|> closure <?> "Callable funcion"
+caller
+   = try variable
+  <|> try operator
+  <|> closure
+  <?> "Callable funcion"
 
 -- |
 -- Parse Variables
@@ -189,11 +210,20 @@ symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 
 atom :: Parser S.Expr
-atom = try number <|> try bool <|> try str <|> try operator <|> variable
+atom
+   =  try number
+  <|> try bool
+  <|> try str
+  <|> try operator
+  <|> variable
   <?> "Atomic Value"
 
 number :: Parser S.Expr
-number = try float <|> try ratio <|> int <?> "Number Literal"
+number
+   =  try float
+  <|> try ratio
+  <|> int
+  <?> "Number Literal"
 
 collection :: Parser S.Expr
 collection = list -- <|> vector <|> weakmap
