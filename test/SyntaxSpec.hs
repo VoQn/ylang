@@ -62,16 +62,16 @@ spec = do
       show (Y.Call (Y.Var "f") [Y.Var "x", Y.Var "y"]) `shouldBe`
       "(f x y)"
 
-    it "arrow (-> () A)" $
-      show (Y.Arrow [] (Var "A")) `shouldBe`
-      "(-> () A)"
-
     it "arrow (-> A B)" $
-      show (Y.Arrow [Var "A"] (Var "B")) `shouldBe`
+      show (Y.Arrow　(Y.Var "A") [] (Var "B")) `shouldBe`
       "(-> A B)"
 
     it "arrow (-> A B C)" $
-      show (Y.Arrow [Y.Var "A",Y.Var "B"] (Var "C")) `shouldBe`
+      show (Y.Arrow (Y.Var "A") [Y.Var "B"] (Var "C")) `shouldBe`
+      "(-> A B C)"
+
+    it "arrow (-> A B C)" $
+      show (Y.Arrow (Y.Var "A") [Y.Var "B"] (Var "C")) `shouldBe`
       "(-> A B C)"
 
     it "define (= x 10)" $

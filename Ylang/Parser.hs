@@ -39,9 +39,11 @@ factor = try declare <|> try define <|> try closure <|> call
 -- |
 -- >>> parse declare "<stdin>" "(: x Int)"
 -- Right (: x Int)
--- >>> parse declare "<stdin>" "(: add (-> (-> Int Int) Int))"
--- Right (: (add Int Int) Int)
 -- >>> parse declare "<stdin>" "(: (add Int Int) Int)"
+-- Right (: (add Int Int) Int)
+-- >>> parse declare "<stdin>" "(: add (-> Int Int Int))"
+-- Right (: (add Int Int) Int)
+-- >>> parse declare "<stdin>" "(: add (-> (-> Int Int) Int))"
 -- Right (: (add Int Int) Int)
 declare :: Parser S.Expr
 declare = L.parens form <?> "Declaration Expression"
@@ -53,25 +55,30 @@ declare = L.parens form <?> "Declaration Expression"
     return $ normalize f args ret
   example = L.parens $ many1 variable
   simple  = (:[]) <$> variable
+
   normalize f args ret = case ret of
-    S.Arrow args' ret' -> S.Declare f (args ++ args') ret'
-    _                  -> S.Declare f args ret
+    S.Arrow i args' ret'
+      -> S.Declare f (args ++ (i:args')) ret'
+    _
+      -> S.Declare f args ret
 
 arrow :: Parser S.Expr
 arrow = L.parens $ do
   L.reservedOp "->"
-  tys <- many1 (try arrow <|> variable)
-  return $ normalize [] tys
+  ts <- many1 (try arrow <|> variable)
+  return $ normalize [] ts
   where
   normalize rs ts = case ts of
-    [] -> let r = head rs
-              rs' = reverse $ tail rs
-          in S.Arrow rs' r
-    t:ts' -> case t of
-      S.Arrow args ret
-        -> normalize (ret : reverse args ++ rs) ts'
-      _
-        -> normalize (t:rs) ts'
+    []
+      -> let r       = head rs
+             (i:rs') = reverse $ tail rs
+         in S.Arrow i rs' r
+    (t:ts')
+      -> case t of
+        S.Arrow i as r
+          -> normalize rs $ (i : as) ++ (r : ts')
+        _
+          -> normalize (t:rs) ts'
 
 -- |
 -- Parse Definition Syntax

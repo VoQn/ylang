@@ -120,6 +120,20 @@ spec = do
     it "can parse empty list : []" $
       Parse.collection <? "[]" `shouldBeParse` Syntax.List []
 
+  describe "arrow type parser" $ do
+
+    it "can parse binary : (a -> a)" $
+      Parse.arrow <? "(-> a a)" `shouldBeParse`
+      Syntax.Arrow (Syntax.Var "a") [] (Syntax.Var "a")
+
+    it "can parse nested A : (-> a (-> b a))" $
+      Parse.arrow <? "(-> a (-> b a))" `shouldBeParse`
+      Syntax.Arrow (Syntax.Var "a") [Syntax.Var "b"] (Syntax.Var "a")
+
+    it "can parse nested B : (-> (-> a b) a))" $
+      Parse.arrow <? "(-> (-> a b) a)" `shouldBeParse`
+      Syntax.Arrow (Syntax.Var "a") [Syntax.Var "b"] (Syntax.Var "a")
+
   describe "definition parser" $ do
 
     it "can parse simple definition : (= x yes)" $
