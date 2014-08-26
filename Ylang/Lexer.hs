@@ -1,5 +1,6 @@
 module Ylang.Lexer where
 
+import Text.Parsec.String (Parser)
 import Text.Parsec.Language (emptyDef)
 
 import qualified Text.Parsec.Token as Token
@@ -16,12 +17,23 @@ lexer = Token.makeTokenParser style
     operators   = ["+", "-", "*", "/", "=", "\\", "->", ",", ".", ":"]
     keywords    = ["dec", "def", "let", "var"]
 
+integer :: Parser Integer
 integer = Token.integer lexer
-float   = Token.float lexer
+
+float :: Parser Double
+float = Token.float lexer
+
+strings :: Parser String
 strings = Token.stringLiteral lexer
 
-parens     = Token.parens lexer
-brackets   = Token.brackets lexer
+parens :: Parser a -> Parser a
+parens = Token.parens lexer
 
-reserved   = Token.reserved lexer
+brackets :: Parser a -> Parser a
+brackets = Token.brackets lexer
+
+reserved :: String -> Parser ()
+reserved = Token.reserved lexer
+
+reservedOp :: String -> Parser ()
 reservedOp = Token.reservedOp lexer
