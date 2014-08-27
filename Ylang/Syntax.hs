@@ -7,7 +7,7 @@ type Name = String
 
 data Expr
   -- atomic
-  = Atom     Name
+  = Atom    Name
   | Int     Integer
   | Float   Double
   | Ratio   Rational
@@ -34,11 +34,11 @@ showRatio x
 instance Show Expr where
   show expr = case expr of
     -- atomic
-    Atom    name -> name
-    Int     num -> show num
-    Float   num -> show num
-    Ratio   num -> showRatio num
-    String  str -> '"' : str ++ "\""
+    Atom    s -> s
+    Int     n -> show n
+    Float   n -> show n
+    Ratio   n -> showRatio n
+    String  s -> '"' : s ++ "\""
     Boolean b | b -> "yes" | otherwise -> "no"
 
     -- collection
