@@ -40,10 +40,10 @@ spec = do
       show (Y.String "message") `shouldBe` "\"message\""
 
     it "operator (&)" $
-      show (Y.Var "&") `shouldBe` "&"
+      show (Y.Atom "&") `shouldBe` "&"
 
     it "variable x" $
-      show (Y.Var "x") `shouldBe` "x"
+      show (Y.Atom "x") `shouldBe` "x"
 
     it "list []" $
       show (Y.List []) `shouldBe` "[]"
@@ -52,40 +52,40 @@ spec = do
       show (Y.List [Y.Int 1, Y.Int 2,Y.Int 3]) `shouldBe` "[1 2 3]"
 
     it "lambda (-> x x)" $
-      show (Y.Lambda (Y.Var "x") [] (Y.Var "x")) `shouldBe` "(-> x x)"
+      show (Y.Lambda (Y.Atom "x") [] (Y.Atom "x")) `shouldBe` "(-> x x)"
 
     it "lambda (-> (x y) y)" $
-      show (Y.Lambda (Y.Var "x") [Y.Var "y"] (Y.Var "y")) `shouldBe`
+      show (Y.Lambda (Y.Atom "x") [Y.Atom "y"] (Y.Atom "y")) `shouldBe`
       "(-> (x y) y)"
 
     it "apply (f x y)" $
-      show (Y.Call (Y.Var "f") [Y.Var "x", Y.Var "y"]) `shouldBe`
+      show (Y.Call (Y.Atom "f") [Y.Atom "x", Y.Atom "y"]) `shouldBe`
       "(f x y)"
 
     it "arrow (-> A B)" $
-      show (Y.Arrow　(Y.Var "A") [] (Var "B")) `shouldBe`
+      show (Y.Arrow　(Y.Atom "A") [] (Atom "B")) `shouldBe`
       "(-> A B)"
 
     it "arrow (-> A B C)" $
-      show (Y.Arrow (Y.Var "A") [Y.Var "B"] (Var "C")) `shouldBe`
+      show (Y.Arrow (Y.Atom "A") [Y.Atom "B"] (Atom "C")) `shouldBe`
       "(-> A B C)"
 
     it "arrow (-> A B C)" $
-      show (Y.Arrow (Y.Var "A") [Y.Var "B"] (Var "C")) `shouldBe`
+      show (Y.Arrow (Y.Atom "A") [Y.Atom "B"] (Atom "C")) `shouldBe`
       "(-> A B C)"
 
     it "define (= x 10)" $
-      show (Y.Define (Y.Var "x") [] (Y.Int 10)) `shouldBe`
+      show (Y.Define (Y.Atom "x") [] (Y.Int 10)) `shouldBe`
       "(= x 10)"
 
     it "define (= (f x) x)" $
-      show (Y.Define (Y.Var "f") [Y.Var "x"] (Var "x")) `shouldBe`
+      show (Y.Define (Y.Atom "f") [Y.Atom "x"] (Atom "x")) `shouldBe`
       "(= (f x) x)"
 
     it "declare (: x Int)" $
-      show (Y.Declare (Y.Var "x") [] (Y.Var "Int")) `shouldBe`
+      show (Y.Declare (Y.Atom "x") [] (Y.Atom "Int")) `shouldBe`
       "(: x Int)"
 
     it "declare (: (f A) B)" $
-      show (Y.Declare (Y.Var "f") [Y.Var "A"] (Y.Var "B")) `shouldBe`
+      show (Y.Declare (Y.Atom "f") [Y.Atom "A"] (Y.Atom "B")) `shouldBe`
       "(: (f A) B)"

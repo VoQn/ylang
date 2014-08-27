@@ -7,7 +7,7 @@ type Name = String
 
 data Expr
   -- atomic
-  = Var     Name
+  = Atom     Name
   | Int     Integer
   | Float   Double
   | Ratio   Rational
@@ -34,7 +34,7 @@ showRatio x
 instance Show Expr where
   show expr = case expr of
     -- atomic
-    Var    name -> name
+    Atom    name -> name
     Int     num -> show num
     Float   num -> show num
     Ratio   num -> showRatio num

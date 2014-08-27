@@ -11,36 +11,36 @@ import Ylang.Syntax
 -- Find Free Variables from Lambda Expression
 --
 -- (-> x x) ... []
--- >>> freeVars $ Lambda (Var "x") [] (Var "x")
+-- >>> freeVars $ Lambda (Atom "x") [] (Atom "x")
 -- fromList []
 --
 -- (-> x y) ... [y]
--- >>> freeVars $ Lambda (Var "x") [] (Var "y")
+-- >>> freeVars $ Lambda (Atom "x") [] (Atom "y")
 -- fromList [y]
 --
 -- (-> (x y) [w,x,y,z]) ... [w,z]
--- >>> freeVars $ Lambda (Var "x") [Var "y"] $ List [Var "w",Var "x",Var "y",Var "z"]
+-- >>> freeVars $ Lambda (Atom "x") [Atom "y"] $ List [Atom "w",Atom "x",Atom "y",Atom "z"]
 -- fromList [w,z]
 --
 -- (-> x (+ x 1))
--- >>> freeVars $ Lambda (Var "x") [] $ Call (Var "+") [Var "x",Int 1]
+-- >>> freeVars $ Lambda (Atom "x") [] $ Call (Atom "+") [Atom "x",Int 1]
 -- fromList [+]
 --
 -- (-> x (+ y 1))
--- >>> freeVars $ Lambda (Var "x") [] $ Call (Var "+") [Var "y",Int 1]
+-- >>> freeVars $ Lambda (Atom "x") [] $ Call (Atom "+") [Atom "y",Int 1]
 -- fromList [+,y]
 --
 -- ((-> y y) 1) ... []
--- >>> freeVars $ Call (Lambda (Var "y") [] $ Var "y") [Int 1]
+-- >>> freeVars $ Call (Lambda (Atom "y") [] $ Atom "y") [Int 1]
 -- fromList []
 --
 -- ((-> y x) 1) ... [x]
--- >>> freeVars $ Call (Lambda (Var "y") [] $ Var "x") [Int 1]
+-- >>> freeVars $ Call (Lambda (Atom "y") [] $ Atom "x") [Int 1]
 -- fromList [x]
 --
 freeVars :: Expr -> Set Expr
 freeVars expr = case expr of
-  Var _
+  Atom _
     -> Set.singleton expr
 
   List es
@@ -56,7 +56,7 @@ freeVars expr = case expr of
     Lambda _ _ _
       -> Set.union (freeVars f) $ collect args
 
-    Var _
+    Atom _
       -> Set.insert f $ collect args
 
     Call g args'
@@ -74,15 +74,15 @@ freeVars expr = case expr of
 --
 -- Convertable case:
 -- (-> x ((-> x x) x)) ... (-> y ((-> x x) y))
--- >>> let g = Lambda (Var "x") [] $ Var "x"
--- >>> let f = Lambda (Var "x") [] $ Call g [Var "x"]
+-- >>> let g = Lambda (Atom "x") [] $ Atom "x"
+-- >>> let f = Lambda (Atom "x") [] $ Call g [Atom "x"]
 -- >>> alpha $ f
 -- (-> y_0 ((-> x_0 x_0) y_0))
 --
 -- Not-Convertable case:
 -- (-> x ((-> y x) x)) ... (-> x ((-> y x) x))
--- >>> let g = Lambda (Var "y") [] $ Var "x"
--- >>> let f = Lambda (Var "x") [] $ Call g [Var "x"]
+-- >>> let g = Lambda (Atom "y") [] $ Atom "x"
+-- >>> let f = Lambda (Atom "x") [] $ Call g [Atom "x"]
 -- >>> alpha $ f
 -- (-> x ((-> y x) x))
 --
@@ -104,25 +104,25 @@ alpha expr = case expr of
 builtins :: Map Expr Expr
 builtins = Map.fromList
   [
-      (Var "id", Lambda (Var "x") [] (Var "x"))
-    , (Var "seq", Lambda (Var "x") [Var "y"] (Var "y"))
+      (Atom "id", Lambda (Atom "x") [] (Atom "x"))
+    , (Atom "seq", Lambda (Atom "x") [Atom "y"] (Atom "y"))
   ]
 
 -- |
 -- Evaluate Expression
 --
 -- >>> let env = Map.empty
--- >>> fst $ eval env (Var "x")
+-- >>> fst $ eval env (Atom "x")
 -- x
 --
 -- >>> let env  = Map.empty
--- >>> let func = Lambda (Var "x") [] (Var "x")
--- >>> let expr = Call func [Var "y"]
+-- >>> let func = Lambda (Atom "x") [] (Atom "x")
+-- >>> let expr = Call func [Atom "y"]
 -- >>> fst $ eval Map.empty expr
 -- y
 --
--- >>> let env = Map.fromList [(Var "x",Int 100)]
--- >>> fst $ eval env (Var "x")
+-- >>> let env = Map.fromList [(Atom "x",Int 100)]
+-- >>> fst $ eval env (Atom "x")
 -- 100
 --
 eval :: Map Expr Expr -> Expr -> (Expr, Map Expr Expr)
@@ -135,12 +135,12 @@ eval env expr =
 -- Apply Function with Arguments
 --
 -- id : (-> x x)
--- >>> applyf (Lambda (Var "x") [] (Var "x")) [Int 10]
+-- >>> applyf (Lambda (Atom "x") [] (Atom "x")) [Int 10]
 -- 10
 --
 applyf :: Expr -> [Expr] -> Expr
 applyf expr args = case expr of
-  Lambda x@(Var _) [] y@(Var _)
+  Lambda x@(Atom _) [] y@(Atom _)
     | x == y      -> head args
     | elem y args -> y
     | otherwise   -> List []
@@ -149,12 +149,12 @@ applyf expr args = case expr of
 -- |
 -- Rename Variable identifier
 --
--- >>> let vars = [Var "foo",Var "bar"]
+-- >>> let vars = [Atom "foo",Atom "bar"]
 -- >>> rename "x_" 0 [] vars
 -- [x_0,x_1]
 --
--- >>> let a_list = List [Var "a",Var "b"]
--- >>> let b_list = List [Var "c",Var "d"]
+-- >>> let a_list = List [Atom "a",Atom "b"]
+-- >>> let b_list = List [Atom "c",Atom "d"]
 -- >>> rename "x_" 0 [] [a_list, b_list]
 -- [[x_0_0 x_0_1],[x_1_0 x_1_1]]
 --
@@ -168,8 +168,8 @@ rename p i rs es = case es of
   where
   rename' :: String -> Int -> Expr -> (Int, Expr)
   rename' q k ex = case ex of
-    Var _
-      -> (k + 1, Var $ q ++ show k)
+    Atom _
+      -> (k + 1, Atom $ q ++ show k)
 
     List ys
       -> (k + 1, List $ rename (q ++ (show k) ++ "_") 0 [] ys)
@@ -178,17 +178,17 @@ rename p i rs es = case es of
 
 -- |
 --
--- >>> let env = Map.fromList [(Var "x",Int 1)]
--- >>> apply env $ Var "x"
+-- >>> let env = Map.fromList [(Atom "x",Int 1)]
+-- >>> apply env $ Atom "x"
 -- 1
 --
--- >>> let env = Map.fromList [(Var "x",Int 1)]
--- >>> apply env $ List [Var "x",Var "x"]
+-- >>> let env = Map.fromList [(Atom "x",Int 1)]
+-- >>> apply env $ List [Atom "x",Atom "x"]
 -- [1 1]
 --
 apply :: Map Expr Expr -> Expr -> Expr
 apply env expr = case expr of
-  v@(Var _) -> maybe v id $ Map.lookup v env
+  v@(Atom _) -> maybe v id $ Map.lookup v env
   List xs   -> List $ map (apply env) xs
   Call f args
     -> Call f $ map (apply env) args

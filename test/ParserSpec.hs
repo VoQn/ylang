@@ -89,12 +89,12 @@ spec = do
   describe "variable parser" $ do
 
     it "can parse : x" $
-      Parse.variable <? "x" `shouldBeParse` Y.Var "x"
+      Parse.variable <? "x" `shouldBeParse` Y.Atom "x"
 
   describe "operator parser" $ do
 
     it "can parse (+)" $
-      Parse.operator <? "+" `shouldBeParse` Y.Var "+"
+      Parse.operator <? "+" `shouldBeParse` Y.Atom "+"
 
   describe "atom parser" $ do
 
@@ -111,10 +111,10 @@ spec = do
       Parse.atom <? "\"value\"" `shouldBeParse` Y.String "value"
 
     it "can parse operator : (*)" $
-      Parse.atom <? "*" `shouldBeParse` Y.Var "*"
+      Parse.atom <? "*" `shouldBeParse` Y.Atom "*"
 
     it "can parse varibale : `named`" $
-      Parse.atom <? "named" `shouldBeParse` Y.Var "named"
+      Parse.atom <? "named" `shouldBeParse` Y.Atom "named"
 
   describe "collection parser" $ do
 
@@ -125,46 +125,46 @@ spec = do
 
     it "can parse binary : (a -> a)" $
       Parse.arrow <? "(-> a a)" `shouldBeParse`
-      Y.Arrow (Y.Var "a") [] (Y.Var "a")
+      Y.Arrow (Y.Atom "a") [] (Y.Atom "a")
 
     it "can parse nested A : (-> a (-> b a))" $
       Parse.arrow <? "(-> a (-> b a))" `shouldBeParse`
-      Y.Arrow (Y.Var "a") [Y.Var "b"] (Y.Var "a")
+      Y.Arrow (Y.Atom "a") [Y.Atom "b"] (Y.Atom "a")
 
     it "can parse nested B : (-> (-> a b) a))" $
       Parse.arrow <? "(-> (-> a b) a)" `shouldBeParse`
-      Y.Arrow (Y.Var "a") [Y.Var "b"] (Y.Var "a")
+      Y.Arrow (Y.Atom "a") [Y.Atom "b"] (Y.Atom "a")
 
   describe "definition parser" $ do
 
     it "can parse simple definition : (= x yes)" $
       Parse.define <? "(= x no)" `shouldBeParse`
-      Y.Define (Y.Var "x") [] (Y.Boolean False)
+      Y.Define (Y.Atom "x") [] (Y.Boolean False)
 
     it "can parse function definition : (= (id x) x)" $
       Parse.define <? "(= (id x) x)" `shouldBeParse`
-      Y.Define (Y.Var "id") [Y.Var "x"] (Y.Var "x")
+      Y.Define (Y.Atom "id") [Y.Atom "x"] (Y.Atom "x")
 
     it "can parse definition (has nested expression) : (= (f x) (+ x 1))" $
       Parse.define <? "(= (f x) (+ x 1))" `shouldBeParse`
-      Y.Define (Y.Var "f")
-               [Y.Var "x"]
-               (Y.Call (Y.Var "+") [Y.Var "x", Y.Int 1])
+      Y.Define (Y.Atom "f")
+               [Y.Atom "x"]
+               (Y.Call (Y.Atom "+") [Y.Atom "x", Y.Int 1])
 
     it "can parse lambda style definition : (= seq (-> (x y) y))" $
       Parse.define <? "(= seq (-> (x y) y))" `shouldBeParse`
-      Y.Define (Y.Var "seq") [Y.Var "x", Y.Var "y"] (Y.Var "y")
+      Y.Define (Y.Atom "seq") [Y.Atom "x", Y.Atom "y"] (Y.Atom "y")
 
   describe "declaration parser" $ do
 
     it "can parse simple declaration : (: zero Int)" $
       Parse.declare <? "(: zero Int)" `shouldBeParse`
-      Y.Declare (Y.Var "zero") [] (Y.Var "Int")
+      Y.Declare (Y.Atom "zero") [] (Y.Atom "Int")
 
     it "can parse function declaration : (: (f a) a)" $
       Parse.declare <? "(: (f a) a)" `shouldBeParse`
-      Y.Declare (Y.Var "f") [Y.Var "a"] (Y.Var "a")
+      Y.Declare (Y.Atom "f") [Y.Atom "a"] (Y.Atom "a")
 
     it "can parse arrow type declaration : (: f (-> a a))" $
       Parse.declare <? "(: f (-> a a))" `shouldBeParse`
-      Y.Declare (Y.Var "f") [Y.Var "a"] (Y.Var "a")
+      Y.Declare (Y.Atom "f") [Y.Atom "a"] (Y.Atom "a")

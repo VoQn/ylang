@@ -174,7 +174,7 @@ caller
 -- >>> parse variable "<stdin>" "x->string"
 -- Right x->string
 variable :: Parser S.Expr
-variable = S.Var <$> identifier
+variable = S.Atom <$> identifier
 
 -- |
 -- Parse Operator
@@ -183,7 +183,7 @@ variable = S.Var <$> identifier
 -- >>> parse operator "<stdin>" "??"
 -- Right ??
 operator :: Parser S.Expr
-operator = S.Var <$> many1 symbol <* many space
+operator = S.Atom <$> many1 symbol <* many space
 
 -- |
 -- Parse Symbol Identifier
