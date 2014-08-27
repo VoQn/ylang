@@ -48,6 +48,7 @@ Library
                        , Ylang.Lexer
                        , Ylang.Type
                        , Ylang.Parser
+                       , Ylang.Parser.Atomic
                        , Ylang.Eval
 
   Build-Depends:       base

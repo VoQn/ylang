@@ -1,15 +1,15 @@
 module Ylang.Parser where
 
-import Data.Ratio ((%))
-
 import Text.Parsec
 import Text.Parsec.String (Parser)
 import qualified Text.Parsec.Expr as Ex
 
 import Control.Applicative ((<$>), (<*>), (*>), (<*))
 
-import qualified Ylang.Lexer as L
+import Ylang.Lexer as L
 import qualified Ylang.Syntax as S
+
+import Ylang.Parser.Atomic
 
 makeStdinParser :: Parser a -> String -> Either ParseError a
 makeStdinParser p s = parse (contents p) "<stdin>" s
@@ -158,82 +158,16 @@ call = L.parens form
 
 caller :: Parser S.Expr
 caller
-   = try variable
+   =  try variable
   <|> try operator
   <|> closure
   <?> "Callable funcion"
-
--- |
--- Parse Variables
--- >>> parse variable "<stdin>" "x"
--- Right x
--- >>> parse variable "<stdin>" "empty?"
--- Right empty?
--- >>> parse variable "<stdin>" "add#"
--- Right add#
--- >>> parse variable "<stdin>" "x->string"
--- Right x->string
-variable :: Parser S.Expr
-variable = S.Atom <$> identifier
-
--- |
--- Parse Operator
--- >>> parse operator "<stdin>" "+"
--- Right +
--- >>> parse operator "<stdin>" "??"
--- Right ??
-operator :: Parser S.Expr
-operator = S.Atom <$> many1 symbol <* many space
-
--- |
--- Parse Symbol Identifier
--- >>> parse identifier "<stdin>" "x"
--- Right "x"
--- >>> parse identifier "<stdin>" "x->string"
--- Right "x->string"
-identifier :: Parser String
-identifier = (:) <$> istart <*> ichars <* many space
-  where
-  istart = letter
-  ichars = many $ alphaNum <|> symbol
-
-symbol :: Parser Char
-symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
-
-atom :: Parser S.Expr
-atom
-   =  try number
-  <|> try bool
-  <|> try str
-  <|> try operator
-  <|> variable
-  <?> "Atomic Value"
-
-number :: Parser S.Expr
-number
-   =  try float
-  <|> try ratio
-  <|> int
-  <?> "Number Literal"
 
 collection :: Parser S.Expr
 collection
    =  pair
   <|> list -- <|> vector <|> weakmap
   <?> "Collection"
-
--- |
--- Parse Rational number literal [-1/2, 0/1, 1/2, 3/5, ...]
--- >>> parse ratio "<stdin>" "1/2"
--- Right 1/2
--- >>> parse ratio "<stdin>" "4/2"
--- Right 2/1
-ratio :: Parser S.Expr
-ratio = do
-  n <- L.integer
-  L.reservedOp "/"
-  d <- L.integer
-  return $ S.Ratio $ n % d
 
 -- |
 -- Parse pair literal [(, 1 2), (, yes 2), (, x no), ...]
@@ -270,50 +204,4 @@ pair
 -- >>> parse list "<stdin>" "[xyz (seq y)]"
 -- Right [xyz (seq y)]
 list :: Parser S.Expr
-list = L.brackets $ S.Array <$> many expr
-
--- |
--- Parse integer number [...-2 -1, 0, 1 2 ...]
--- >>> parse int "<stdin>" "0"
--- Right 0
--- >>> parse int "<stdin>" "-2"
--- Right -2
--- >>> parse int "<stdin>" "0xff"
--- Right 255
-int :: Parser S.Expr
-int = S.Int <$> L.integer
-
--- |
--- Parse flaoting point number [... -1.0 -0.5 0.0 0.5 1.0 ...]
--- >>> parse float "<stdin>" "0.0"
--- Right 0.0
--- >>> parse float "<stdin>" "0.5"
--- Right 0.5
--- >>> parse float "<stdin>" "-0.5"
--- Right -0.5
-float :: Parser S.Expr
-float = wrap <$> signed <*> L.float
-  where
-  wrap s v = S.Float $ s v
-  signed   = try minus <|> return id
-  minus    = char '-' >> return ((-) 0)
-
--- |
--- Parse boolean identifier [Yes/No]
--- >>> parse bool "<stdin>" "yes"
--- Right yes
--- >>> parse bool "<stdin>" "no"
--- Right no
-bool :: Parser S.Expr
-bool = S.Boolean <$> ("yes" ?> True <|> "no" ?> False)
-  where
-  k ?> r = try (string k) >> return r
-
--- |
--- Parse String literal
--- >>> parse str "<stdin>" "\"\""
--- Right ""
--- >>> parse str "<stdin>" "\"Hello!\""
--- Right "Hello!"
-str :: Parser S.Expr
-str = S.String <$> L.strings
+list = brackets $ S.Array <$> many expr
