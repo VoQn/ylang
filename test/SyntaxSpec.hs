@@ -40,7 +40,7 @@ spec = do
       show (Y.String "message") `shouldBe` "\"message\""
 
     it "operator (&)" $
-      show (Y.Operator "&") `shouldBe` "&"
+      show (Y.Var "&") `shouldBe` "&"
 
     it "variable x" $
       show (Y.Var "x") `shouldBe` "x"

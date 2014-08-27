@@ -19,27 +19,23 @@ import Ylang.Syntax
 -- fromList [y]
 --
 -- (-> (x y) [w,x,y,z]) ... [w,z]
--- >>> let expr = List [Var "w",Var "x",Var "y",Var "z"]
--- >>> freeVars $ Lambda (Var "x") [Var "y"] expr
+-- >>> freeVars $ Lambda (Var "x") [Var "y"] $ List [Var "w",Var "x",Var "y",Var "z"]
 -- fromList [w,z]
 --
 -- (-> x (+ x 1))
--- >>> let expr = Call (Operator "+") [Var "x",Int 1]
--- >>> freeVars $ Lambda (Var "x") [] expr
--- fromList []
+-- >>> freeVars $ Lambda (Var "x") [] $ Call (Var "+") [Var "x",Int 1]
+-- fromList [+]
 --
 -- (-> x (+ y 1))
--- >>> freeVars $ Lambda (Var "x") [] $ Call (Operator "+") [Var "y",Int 1]
--- fromList [y]
+-- >>> freeVars $ Lambda (Var "x") [] $ Call (Var "+") [Var "y",Int 1]
+-- fromList [+,y]
 --
 -- ((-> y y) 1) ... []
--- >>> let func = Lambda (Var "y") [] $ Var "y"
--- >>> freeVars $ Call func [Int 1]
+-- >>> freeVars $ Call (Lambda (Var "y") [] $ Var "y") [Int 1]
 -- fromList []
 --
 -- ((-> y x) 1) ... [x]
--- >>> let func = Lambda (Var "y") [] $ Var "x"
--- >>> freeVars $ Call func [Int 1]
+-- >>> freeVars $ Call (Lambda (Var "y") [] $ Var "x") [Int 1]
 -- fromList [x]
 --
 freeVars :: Expr -> Set Expr
@@ -59,9 +55,6 @@ freeVars expr = case expr of
   Call f args -> case f of
     Lambda _ _ _
       -> Set.union (freeVars f) $ collect args
-
-    Operator _
-      -> collect args
 
     Var _
       -> Set.insert f $ collect args

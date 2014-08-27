@@ -94,7 +94,7 @@ spec = do
   describe "operator parser" $ do
 
     it "can parse (+)" $
-      Parse.operator <? "+" `shouldBeParse` Y.Operator "+"
+      Parse.operator <? "+" `shouldBeParse` Y.Var "+"
 
   describe "atom parser" $ do
 
@@ -111,7 +111,7 @@ spec = do
       Parse.atom <? "\"value\"" `shouldBeParse` Y.String "value"
 
     it "can parse operator : (*)" $
-      Parse.atom <? "*" `shouldBeParse` Y.Operator "*"
+      Parse.atom <? "*" `shouldBeParse` Y.Var "*"
 
     it "can parse varibale : `named`" $
       Parse.atom <? "named" `shouldBeParse` Y.Var "named"
@@ -149,7 +149,7 @@ spec = do
       Parse.define <? "(= (f x) (+ x 1))" `shouldBeParse`
       Y.Define (Y.Var "f")
                [Y.Var "x"]
-               (Y.Call (Y.Operator "+") [Y.Var "x", Y.Int 1])
+               (Y.Call (Y.Var "+") [Y.Var "x", Y.Int 1])
 
     it "can parse lambda style definition : (= seq (-> (x y) y))" $
       Parse.define <? "(= seq (-> (x y) y))" `shouldBeParse`

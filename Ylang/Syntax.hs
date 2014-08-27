@@ -7,7 +7,6 @@ type Name = String
 
 data Expr
   = Var      Name
-  | Operator Name
   | List     [Expr]
   | Int      Integer
   | Float    Double
@@ -28,7 +27,6 @@ showRatio x
 instance Show Expr where
   show expr = case expr of
     Var    name -> name
-    Operator op -> op
     Int     num -> show num
     Float   num -> show num
     Ratio   num -> showRatio num

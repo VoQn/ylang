@@ -183,7 +183,7 @@ variable = S.Var <$> identifier
 -- >>> parse operator "<stdin>" "??"
 -- Right ??
 operator :: Parser S.Expr
-operator = S.Operator <$> many1 symbol <* many space
+operator = S.Var <$> many1 symbol <* many space
 
 -- |
 -- Parse Symbol Identifier
