@@ -6,18 +6,25 @@ import Data.List (intercalate)
 type Name = String
 
 data Expr
-  = Var      Name
-  | List     [Expr]
-  | Int      Integer
-  | Float    Double
-  | Ratio    Rational
-  | String   String
-  | Boolean  Bool
-  | Call     Expr    [Expr]
-  | Lambda   Expr    [Expr]  Expr
-  | Arrow    Expr    [Expr]  Expr
-  | Define   Expr    [Expr]  Expr
-  | Declare  Expr    [Expr]  Expr
+  -- atomic
+  = Var     Name
+  | Int     Integer
+  | Float   Double
+  | Ratio   Rational
+  | String  String
+  | Boolean Bool
+
+  -- collection
+  | List    [Expr]
+
+  -- factor
+  | Call    Expr [Expr]
+  | Lambda  Expr [Expr] Expr
+
+  -- redundant
+  | Arrow   Expr [Expr] Expr
+  | Define  Expr [Expr] Expr
+  | Declare Expr [Expr] Expr
   deriving (Eq, Ord)
 
 showRatio :: Rational -> String
@@ -26,6 +33,7 @@ showRatio x
 
 instance Show Expr where
   show expr = case expr of
+    -- atomic
     Var    name -> name
     Int     num -> show num
     Float   num -> show num
@@ -33,7 +41,10 @@ instance Show Expr where
     String  str -> '"' : str ++ "\""
     Boolean b | b -> "yes" | otherwise -> "no"
 
+    -- collection
     List es -> '[' : showl " " es ++ "]"
+
+    -- factor
     Call e1 e2 -> '(' : showl " " (e1:e2) ++ ")"
 
     Lambda i as e -> case as of
