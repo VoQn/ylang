@@ -6,19 +6,26 @@ import Data.List (intercalate)
 type Name = String
 
 data Expr
-  = Var      Name
-  | Operator Name
-  | List     [Expr]
-  | Int      Integer
-  | Float    Double
-  | Ratio    Rational
-  | String   String
-  | Boolean  Bool
-  | Call     Expr    [Expr]
-  | Lambda   [Expr]  Expr
-  | Arrow    Expr    [Expr]  Expr
-  | Define   Expr    [Expr]  Expr
-  | Declare  Expr    [Expr]  Expr
+  -- atomic
+  = Atom    Name
+  | Int     Integer
+  | Float   Double
+  | Ratio   Rational
+  | String  String
+  | Boolean Bool
+
+  -- collection
+  | Pair  Expr   Expr
+  | Array [Expr]
+
+  -- factor
+  | Call    Expr [Expr]
+  | Lambda  Expr [Expr] Expr
+
+  -- redundant
+  | Arrow   Expr [Expr] Expr
+  | Define  Expr [Expr] Expr
+  | Declare Expr [Expr] Expr
   deriving (Eq, Ord)
 
 showRatio :: Rational -> String
@@ -27,19 +34,24 @@ showRatio x
 
 instance Show Expr where
   show expr = case expr of
-    Var    name -> name
-    Operator op -> op
-    Int     num -> show num
-    Float   num -> show num
-    Ratio   num -> showRatio num
-    String  str -> '"' : str ++ "\""
+    -- atomic
+    Atom    s -> s
+    Int     n -> show n
+    Float   n -> show n
+    Ratio   n -> showRatio n
+    String  s -> '"' : s ++ "\""
     Boolean b | b -> "yes" | otherwise -> "no"
 
-    List es -> '[' : showl " " es ++ "]"
+    -- collection
+    Pair e1 e2 -> '(' : showl " , " (e1:e2:[]) ++ ")"
+    Array es -> '[' : showl " " es ++ "]"
+
+    -- factor
     Call e1 e2 -> '(' : showl " " (e1:e2) ++ ")"
 
-    Lambda as e
-      -> "((\\ " ++ showl " " as ++ ") " ++ show e ++ ")"
+    Lambda i as e -> case as of
+      [] -> "(-> " ++ show i ++ " " ++ show e ++ ")"
+      _  -> "(-> (" ++ showl " " (i:as) ++ ") " ++ show e ++ ")"
 
     Arrow i as r
       -> "(-> " ++ showl " " (i : as ++ [r]) ++ ")"

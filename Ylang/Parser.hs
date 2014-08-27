@@ -93,9 +93,9 @@ arrow
 -- Parse Definition Syntax
 -- >>> parse define "<stdin>" "(= x 10)"
 -- Right (= x 10)
--- >>> parse define "<stdin>" "(= seq ((\\ x y) y))"
+-- >>> parse define "<stdin>" "(= seq (-> (x y) y))"
 -- Right (= (seq x y) y)
--- >>> parse define "<stdin>" "(= add ((\\ x y) (+ x y)))"
+-- >>> parse define "<stdin>" "(= add (-> (x y) (+ x y)))"
 -- Right (= (add x y) (+ x y))
 -- >>> parse define "<stdin>" "(= (f x y) y)"
 -- Right (= (f x y) y)
@@ -114,41 +114,32 @@ define
   example = L.parens $ many1 variable
   simple = (:[]) <$> variable
   normalize f args body = case (args, body) of
-    ([], (S.Lambda args' body'))
-      -> S.Define f args' body'
+    ([], (S.Lambda i args' body'))
+      -> S.Define f (i:args') body'
     _
       -> S.Define f args body
 
 -- |
 -- Parse Closure Syntax
--- >>> parse closure "<stdin>" "((\\ x) x)"
--- Right ((\ x) x)
--- >>> parse closure "<stdin>" "((\\ x) [x])"
--- Right ((\ x) [x])
+-- >>> parse closure "<stdin>" "(-> (x) x)"
+-- Right (-> x x)
+-- >>> parse closure "<stdin>" "(-> (x) [x])"
+-- Right (-> x [x])
 closure :: Parser S.Expr
-closure
-   = (uncurry S.Lambda <$> lambda)
-  <?> "((-> {ARGS}) {BODY})"
+closure = L.parens form
+  <?> "(-> ({ARGS}) {BODY})"
+  where
+  form = do
+    L.reservedOp "->"
+    (p:ps) <- (try $ L.parens $ many1 targ) <|> ((:[]) <$> targ)
+    r      <- expr
+    return $ S.Lambda p ps r
 
 targ :: Parser S.Expr
 targ
    =  try variable
   <|> try list
   <?> "Type Expression"
-
--- |
--- Parse Lambda Expression
--- >>> parse lambda "<stdin>" "((\\ x) x)"
--- Right ([x],x)
--- >>> parse lambda "<stdin>" "((\\ x y) z)"
--- Right ([x,y],z)
-lambda :: Parser ([S.Expr], S.Expr)
-lambda
-   = L.parens form
-  <?> "Lambda Expression"
-  where
-  form = (,) <$> args <*> expr
-  args = L.parens $ L.reservedOp "\\" >> many1 targ
 
 -- |
 -- Parse Function Call (f x y z ...)
@@ -183,7 +174,7 @@ caller
 -- >>> parse variable "<stdin>" "x->string"
 -- Right x->string
 variable :: Parser S.Expr
-variable = S.Var <$> identifier
+variable = S.Atom <$> identifier
 
 -- |
 -- Parse Operator
@@ -192,7 +183,7 @@ variable = S.Var <$> identifier
 -- >>> parse operator "<stdin>" "??"
 -- Right ??
 operator :: Parser S.Expr
-operator = S.Operator <$> many1 symbol <* many space
+operator = S.Atom <$> many1 symbol <* many space
 
 -- |
 -- Parse Symbol Identifier
@@ -226,7 +217,9 @@ number
   <?> "Number Literal"
 
 collection :: Parser S.Expr
-collection = list -- <|> vector <|> weakmap
+collection
+   =  pair
+  <|> list -- <|> vector <|> weakmap
   <?> "Collection"
 
 -- |
@@ -243,6 +236,19 @@ ratio = do
   return $ S.Ratio $ n % d
 
 -- |
+-- Parse pair literal [(1 , 2), (yes , 2), (x , no), ...]
+pair :: Parser S.Expr
+pair
+   =  L.parens form
+  <?> "Pair Expression : ({EXPR} , {EXPR})"
+  where
+  form = do
+    h <- expr
+    many space >> L.reservedOp ","
+    t <- expr
+    return $ S.Pair h t
+
+-- |
 -- Parse list literal [[], [1 2 3 4], [x y z] ...]
 -- >>> parse list "<stdin>" "[]"
 -- Right []
@@ -253,7 +259,7 @@ ratio = do
 -- >>> parse list "<stdin>" "[xyz (seq y)]"
 -- Right [xyz (seq y)]
 list :: Parser S.Expr
-list = L.brackets $ S.List <$> many expr
+list = L.brackets $ S.Array <$> many expr
 
 -- |
 -- Parse integer number [...-2 -1, 0, 1 2 ...]
