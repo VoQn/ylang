@@ -119,7 +119,7 @@ spec = do
   describe "collection parser" $ do
 
     it "can parse empty list : []" $
-      Parse.collection <? "[]" `shouldBeParse` Y.List []
+      Parse.collection <? "[]" `shouldBeParse` Y.Array []
 
   describe "arrow type parser" $ do
 

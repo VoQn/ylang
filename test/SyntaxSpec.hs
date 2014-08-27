@@ -46,10 +46,10 @@ spec = do
       show (Y.Atom "x") `shouldBe` "x"
 
     it "list []" $
-      show (Y.List []) `shouldBe` "[]"
+      show (Y.Array []) `shouldBe` "[]"
 
     it "list [1 2 3]" $
-      show (Y.List [Y.Int 1, Y.Int 2,Y.Int 3]) `shouldBe` "[1 2 3]"
+      show (Y.Array [Y.Int 1, Y.Int 2,Y.Int 3]) `shouldBe` "[1 2 3]"
 
     it "lambda (-> x x)" $
       show (Y.Lambda (Y.Atom "x") [] (Y.Atom "x")) `shouldBe` "(-> x x)"

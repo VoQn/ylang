@@ -19,7 +19,7 @@ import Ylang.Syntax
 -- fromList [y]
 --
 -- (-> (x y) [w,x,y,z]) ... [w,z]
--- >>> freeVars $ Lambda (Atom "x") [Atom "y"] $ List [Atom "w",Atom "x",Atom "y",Atom "z"]
+-- >>> freeVars $ Lambda (Atom "x") [Atom "y"] $ Array [Atom "w",Atom "x",Atom "y",Atom "z"]
 -- fromList [w,z]
 --
 -- (-> x (+ x 1))
@@ -43,7 +43,7 @@ freeVars expr = case expr of
   Atom _
     -> Set.singleton expr
 
-  List es
+  Array es
     -> collect es
 
   Define f args expr'
@@ -143,7 +143,7 @@ applyf expr args = case expr of
   Lambda x@(Atom _) [] y@(Atom _)
     | x == y      -> head args
     | elem y args -> y
-    | otherwise   -> List []
+    | otherwise   -> Array []
   _ -> expr
 
 -- |
@@ -153,8 +153,8 @@ applyf expr args = case expr of
 -- >>> rename "x_" 0 [] vars
 -- [x_0,x_1]
 --
--- >>> let a_list = List [Atom "a",Atom "b"]
--- >>> let b_list = List [Atom "c",Atom "d"]
+-- >>> let a_list = Array [Atom "a",Atom "b"]
+-- >>> let b_list = Array [Atom "c",Atom "d"]
 -- >>> rename "x_" 0 [] [a_list, b_list]
 -- [[x_0_0 x_0_1],[x_1_0 x_1_1]]
 --
@@ -171,8 +171,8 @@ rename p i rs es = case es of
     Atom _
       -> (k + 1, Atom $ q ++ show k)
 
-    List ys
-      -> (k + 1, List $ rename (q ++ (show k) ++ "_") 0 [] ys)
+    Array ys
+      -> (k + 1, Array $ rename (q ++ (show k) ++ "_") 0 [] ys)
 
     x -> (k, x)
 
@@ -183,13 +183,13 @@ rename p i rs es = case es of
 -- 1
 --
 -- >>> let env = Map.fromList [(Atom "x",Int 1)]
--- >>> apply env $ List [Atom "x",Atom "x"]
+-- >>> apply env $ Array [Atom "x",Atom "x"]
 -- [1 1]
 --
 apply :: Map Expr Expr -> Expr -> Expr
 apply env expr = case expr of
   v@(Atom _) -> maybe v id $ Map.lookup v env
-  List xs   -> List $ map (apply env) xs
+  Array xs   -> Array $ map (apply env) xs
   Call f args
     -> Call f $ map (apply env) args
 

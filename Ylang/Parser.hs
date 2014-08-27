@@ -244,7 +244,7 @@ ratio = do
 -- >>> parse list "<stdin>" "[xyz (seq y)]"
 -- Right [xyz (seq y)]
 list :: Parser S.Expr
-list = L.brackets $ S.List <$> many expr
+list = L.brackets $ S.Array <$> many expr
 
 -- |
 -- Parse integer number [...-2 -1, 0, 1 2 ...]
