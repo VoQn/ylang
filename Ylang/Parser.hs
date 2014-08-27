@@ -248,6 +248,11 @@ pair
     return $ modify [] es
   modify rs ts = case ts of
     []     -> S.Atom ","
+    [S.Array []] -> case rs of
+      []   -> S.Lambda (S.Atom "x") [] $ S.Pair (S.Array []) $ S.Atom "x"
+      [S.Array []] -> S.Array []
+      [s]  -> S.Array [s]
+      _    -> S.Array $ reverse rs
     (l:[]) -> case rs of
       []  -> S.Lambda (S.Atom "x") [] $ S.Pair l $ S.Atom "x"
       [s] -> S.Pair s l
