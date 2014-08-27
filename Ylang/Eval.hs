@@ -112,24 +112,24 @@ builtins = Map.fromList
 -- Evaluate Expression
 --
 -- >>> let env = Map.empty
--- >>> fst $ eval env (Atom "x")
+-- >>> snd $ eval env (Atom "x")
 -- x
 --
 -- >>> let env  = Map.empty
 -- >>> let func = Lambda (Atom "x") [] (Atom "x")
 -- >>> let expr = Call func [Atom "y"]
--- >>> fst $ eval Map.empty expr
+-- >>> snd $ eval Map.empty expr
 -- y
 --
 -- >>> let env = Map.fromList [(Atom "x",Int 100)]
--- >>> fst $ eval env (Atom "x")
+-- >>> snd $ eval env (Atom "x")
 -- 100
 --
-eval :: Map Expr Expr -> Expr -> (Expr, Map Expr Expr)
+eval :: Map Expr Expr -> Expr -> (Map Expr Expr, Expr)
 eval env (Call f args) = eval env $ applyf f args
 eval env expr =
   let expr' = maybe expr id $ Map.lookup expr env
-  in (expr', env)
+  in (env, expr')
 
 -- |
 -- Apply Function with Arguments
