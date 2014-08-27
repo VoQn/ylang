@@ -236,17 +236,23 @@ ratio = do
   return $ S.Ratio $ n % d
 
 -- |
--- Parse pair literal [(1 , 2), (yes , 2), (x , no), ...]
+-- Parse pair literal [(, 1 2), (, yes 2), (, x no), ...]
 pair :: Parser S.Expr
 pair
    =  L.parens form
-  <?> "Pair Expression : ({EXPR} , {EXPR})"
+  <?> "Pair Expression : (, {EXPR} {EXPR})"
   where
   form = do
-    h <- expr
-    many space >> L.reservedOp ","
-    t <- expr
-    return $ S.Pair h t
+    L.reservedOp ","
+    es <- many (many space >> expr)
+    return $ modify [] es
+  modify rs ts = case ts of
+    []     -> S.Atom ","
+    (l:[]) -> case rs of
+      []  -> S.Lambda (S.Atom "x") [] $ S.Pair l $ S.Atom "x"
+      [s] -> S.Pair s l
+      _   -> S.Pair (S.Array $ reverse rs) l
+    (x:xs) -> modify (x:rs) xs
 
 -- |
 -- Parse list literal [[], [1 2 3 4], [x y z] ...]

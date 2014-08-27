@@ -120,14 +120,14 @@ spec = do
 
   describe "pair parser" $ do
 
-    it "can parse pair (yes , no)" $
-      Parse.pair <? "(yes , no)" `shouldParse`
+    it "can parse pair (, yes no)" $
+      Parse.pair <? "(, yes no)" `shouldParse`
       Y.Pair (Y.Boolean True) (Y.Boolean False)
 
   describe "collection parser" $ do
 
-    it "can parse pair (1 , 2)" $
-      Parse.collection <? "(1 , 2)" `shouldParse` Y.Pair (Y.Int 1) (Y.Int 2)
+    it "can parse pair (, 1 2)" $
+      Parse.collection <? "(, 1 2)" `shouldParse` Y.Pair (Y.Int 1) (Y.Int 2)
 
     it "can parse empty list : []" $
       Parse.collection <? "[]" `shouldParse` Y.Array []
