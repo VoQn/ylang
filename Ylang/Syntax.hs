@@ -15,7 +15,7 @@ data Expr
   | String   String
   | Boolean  Bool
   | Call     Expr    [Expr]
-  | Lambda   [Expr]  Expr
+  | Lambda   Expr    [Expr]  Expr
   | Arrow    Expr    [Expr]  Expr
   | Define   Expr    [Expr]  Expr
   | Declare  Expr    [Expr]  Expr
@@ -38,8 +38,9 @@ instance Show Expr where
     List es -> '[' : showl " " es ++ "]"
     Call e1 e2 -> '(' : showl " " (e1:e2) ++ ")"
 
-    Lambda as e
-      -> "((\\ " ++ showl " " as ++ ") " ++ show e ++ ")"
+    Lambda i as e -> case as of
+      [] -> "(-> " ++ show i ++ " " ++ show e ++ ")"
+      _  -> "(-> (" ++ showl " " (i:as) ++ ") " ++ show e ++ ")"
 
     Arrow i as r
       -> "(-> " ++ showl " " (i : as ++ [r]) ++ ")"

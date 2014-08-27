@@ -51,12 +51,12 @@ spec = do
     it "list [1 2 3]" $
       show (Y.List [Y.Int 1, Y.Int 2,Y.Int 3]) `shouldBe` "[1 2 3]"
 
-    it "lambda ((\\ x) x)" $
-      show (Y.Lambda [Y.Var "x"] (Y.Var "x")) `shouldBe` "((\\ x) x)"
+    it "lambda (-> x x)" $
+      show (Y.Lambda (Y.Var "x") [] (Y.Var "x")) `shouldBe` "(-> x x)"
 
-    it "lambda ((\\ x y) y)" $
-      show (Y.Lambda [Y.Var "x",Y.Var "y"] (Y.Var "y")) `shouldBe`
-      "((\\ x y) y)"
+    it "lambda (-> (x y) y)" $
+      show (Y.Lambda (Y.Var "x") [Y.Var "y"] (Y.Var "y")) `shouldBe`
+      "(-> (x y) y)"
 
     it "apply (f x y)" $
       show (Y.Call (Y.Var "f") [Y.Var "x", Y.Var "y"]) `shouldBe`

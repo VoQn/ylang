@@ -151,8 +151,8 @@ spec = do
                [Y.Var "x"]
                (Y.Call (Y.Operator "+") [Y.Var "x", Y.Int 1])
 
-    it "can parse lambda style definition : (= seq ((\\ x y) y))" $
-      Parse.define <? "(= seq ((\\ x y) y))" `shouldBeParse`
+    it "can parse lambda style definition : (= seq (-> (x y) y))" $
+      Parse.define <? "(= seq (-> (x y) y))" `shouldBeParse`
       Y.Define (Y.Var "seq") [Y.Var "x", Y.Var "y"] (Y.Var "y")
 
   describe "declaration parser" $ do

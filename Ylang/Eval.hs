@@ -11,38 +11,34 @@ import Ylang.Syntax
 -- Find Free Variables from Lambda Expression
 --
 -- (-> x x) ... []
--- >>> freeVars $ Lambda [Var "x"] (Var "x")
+-- >>> freeVars $ Lambda (Var "x") [] (Var "x")
 -- fromList []
 --
 -- (-> x y) ... [y]
--- >>> freeVars $ Lambda [Var "x"] (Var "y")
+-- >>> freeVars $ Lambda (Var "x") [] (Var "y")
 -- fromList [y]
 --
 -- (-> (x y) [w,x,y,z]) ... [w,z]
--- >>> let args = [Var "x",Var "y"]
 -- >>> let expr = List [Var "w",Var "x",Var "y",Var "z"]
--- >>> freeVars $ Lambda args expr
+-- >>> freeVars $ Lambda (Var "x") [Var "y"] expr
 -- fromList [w,z]
 --
 -- (-> x (+ x 1))
--- >>> let args = [Var "x"]
 -- >>> let expr = Call (Operator "+") [Var "x",Int 1]
--- >>> freeVars $ Lambda args expr
+-- >>> freeVars $ Lambda (Var "x") [] expr
 -- fromList []
 --
 -- (-> x (+ y 1))
--- >>> let args = [Var "x"]
--- >>> let expr = Call (Operator "+") [Var "y",Int 1]
--- >>> freeVars $ Lambda args expr
+-- >>> freeVars $ Lambda (Var "x") [] $ Call (Operator "+") [Var "y",Int 1]
 -- fromList [y]
 --
 -- ((-> y y) 1) ... []
--- >>> let func = Lambda [Var "y"] $ Var "y"
+-- >>> let func = Lambda (Var "y") [] $ Var "y"
 -- >>> freeVars $ Call func [Int 1]
 -- fromList []
 --
 -- ((-> y x) 1) ... [x]
--- >>> let func = Lambda [Var "y"] $ Var "x"
+-- >>> let func = Lambda (Var "y") [] $ Var "x"
 -- >>> freeVars $ Call func [Int 1]
 -- fromList [x]
 --
@@ -57,11 +53,11 @@ freeVars expr = case expr of
   Define f args expr'
     -> (freeVars expr') \\ (Set.union (freeVars f) $ collect args)
 
-  Lambda args expr'
-    -> (freeVars expr') \\ (collect args)
+  Lambda i args expr'
+    -> (freeVars expr') \\ (collect (i:args))
 
   Call f args -> case f of
-    Lambda _ _
+    Lambda _ _ _
       -> Set.union (freeVars f) $ collect args
 
     Operator _
@@ -85,27 +81,27 @@ freeVars expr = case expr of
 --
 -- Convertable case:
 -- (-> x ((-> x x) x)) ... (-> y ((-> x x) y))
--- >>> let g = Lambda [Var "x"] $ Var "x"
--- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
+-- >>> let g = Lambda (Var "x") [] $ Var "x"
+-- >>> let f = Lambda (Var "x") [] $ Call g [Var "x"]
 -- >>> alpha $ f
--- ((\ y_0) (((\ x_0) x_0) y_0))
+-- (-> y_0 ((-> x_0 x_0) y_0))
 --
 -- Not-Convertable case:
 -- (-> x ((-> y x) x)) ... (-> x ((-> y x) x))
--- >>> let g = Lambda [Var "y"] $ Var "x"
--- >>> let f = Lambda [Var "x"] $ Call g [Var "x"]
+-- >>> let g = Lambda (Var "y") [] $ Var "x"
+-- >>> let f = Lambda (Var "x") [] $ Call g [Var "x"]
 -- >>> alpha $ f
--- ((\ x) (((\ y) x) x))
+-- (-> x ((-> y x) x))
 --
 alpha :: Expr -> Expr
 alpha expr = case expr of
-  f@(Lambda ys (Call g@(Lambda xs ex) _))
+  f@(Lambda y ys (Call g@(Lambda x xs ex) _))
     | hasNotOutScopeBind g ->
         let
-          xs' = rename "x_" 0 [] xs
-          ys' = rename "y_" 0 [] ys
-          ex' = apply (Map.fromList $ zip xs xs') ex
-        in Lambda ys' $ Call (Lambda xs' ex') ys'
+          (x':xs') = rename "x_" 0 [] (x:xs)
+          (y':ys') = rename "y_" 0 [] (y:ys)
+          ex' = apply (Map.fromList $ zip (x:xs) (x':xs')) ex
+        in Lambda y' ys' $ Call (Lambda x' xs' ex') (y':ys')
     | otherwise -> f
   _
     -> expr
@@ -115,8 +111,8 @@ alpha expr = case expr of
 builtins :: Map Expr Expr
 builtins = Map.fromList
   [
-      (Var "id", Lambda [Var "x"] (Var "x"))
-    , (Var "seq", Lambda [Var "x", Var "y"] (Var "y"))
+      (Var "id", Lambda (Var "x") [] (Var "x"))
+    , (Var "seq", Lambda (Var "x") [Var "y"] (Var "y"))
   ]
 
 -- |
@@ -127,7 +123,7 @@ builtins = Map.fromList
 -- x
 --
 -- >>> let env  = Map.empty
--- >>> let func = Lambda [Var "x"] (Var "x")
+-- >>> let func = Lambda (Var "x") [] (Var "x")
 -- >>> let expr = Call func [Var "y"]
 -- >>> fst $ eval Map.empty expr
 -- y
@@ -146,12 +142,12 @@ eval env expr =
 -- Apply Function with Arguments
 --
 -- id : (-> x x)
--- >>> applyf (Lambda [Var "x"] (Var "x")) [Int 10]
+-- >>> applyf (Lambda (Var "x") [] (Var "x")) [Int 10]
 -- 10
 --
 applyf :: Expr -> [Expr] -> Expr
 applyf expr args = case expr of
-  Lambda (x@(Var _):[]) y@(Var _)
+  Lambda x@(Var _) [] y@(Var _)
     | x == y      -> head args
     | elem y args -> y
     | otherwise   -> List []
