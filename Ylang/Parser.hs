@@ -217,7 +217,9 @@ number
   <?> "Number Literal"
 
 collection :: Parser S.Expr
-collection = list -- <|> vector <|> weakmap
+collection
+   =  pair
+  <|> list -- <|> vector <|> weakmap
   <?> "Collection"
 
 -- |
@@ -232,6 +234,19 @@ ratio = do
   L.reservedOp "/"
   d <- L.integer
   return $ S.Ratio $ n % d
+
+-- |
+-- Parse pair literal [(1 , 2), (yes , 2), (x , no), ...]
+pair :: Parser S.Expr
+pair
+   =  L.parens form
+  <?> "Pair Expression : ({EXPR} , {EXPR})"
+  where
+  form = do
+    h <- expr
+    many space >> L.reservedOp ","
+    t <- expr
+    return $ S.Pair h t
 
 -- |
 -- Parse list literal [[], [1 2 3 4], [x y z] ...]

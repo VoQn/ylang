@@ -15,7 +15,8 @@ data Expr
   | Boolean Bool
 
   -- collection
-  | Array    [Expr]
+  | Pair  Expr   Expr
+  | Array [Expr]
 
   -- factor
   | Call    Expr [Expr]
@@ -42,6 +43,7 @@ instance Show Expr where
     Boolean b | b -> "yes" | otherwise -> "no"
 
     -- collection
+    Pair e1 e2 -> '(' : showl " , " (e1:e2:[]) ++ ")"
     Array es -> '[' : showl " " es ++ "]"
 
     -- factor

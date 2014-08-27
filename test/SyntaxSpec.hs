@@ -45,6 +45,9 @@ spec = do
     it "variable x" $
       show (Y.Atom "x") `shouldBe` "x"
 
+    it "pair (x , y)" $
+      show (Y.Pair (Y.Atom "x") (Y.Atom "y")) `shouldBe` "(x , y)"
+
     it "list []" $
       show (Y.Array []) `shouldBe` "[]"
 
