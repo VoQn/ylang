@@ -19,10 +19,12 @@ data Expr
   | Array [Expr]
 
   -- factor
-  | Call    Expr [Expr]
-  | Lambda  Expr [Expr] Expr
+  | Void
+  | Factor  [Expr]
 
   -- redundant
+  | Call    Expr [Expr]
+  | Lambda  Expr [Expr] Expr
   | Arrow   Expr [Expr] Expr
   | Define  Expr [Expr] Expr
   | Declare Expr [Expr] Expr
@@ -47,6 +49,10 @@ instance Show Expr where
     Array es -> '[' : showl " " es ++ "]"
 
     -- factor
+    Void -> "()"
+    Factor es -> '(' : showl " " es ++ ")"
+
+    -- redundant
     Call e1 e2 -> '(' : showl " " (e1:e2) ++ ")"
 
     Lambda i as e -> case as of
