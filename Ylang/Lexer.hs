@@ -20,8 +20,8 @@ lexer = Token.makeTokenParser style
 integer :: Parser Integer
 integer = Token.integer lexer
 
-float :: Parser Double
-float = Token.float lexer
+floating :: Parser Double
+floating = Token.float lexer
 
 strings :: Parser String
 strings = Token.stringLiteral lexer
