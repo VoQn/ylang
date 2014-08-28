@@ -58,7 +58,7 @@ eval env expr = case expr of
     Atom "="  -> definition  env args
 
     -- create function (not evaluate this time)
-    Atom "->" -> anonymous   env args
+    Atom "\\" -> anonymous   env args
 
     -- other atomic something (maybe function)
     g@(Atom _) ->

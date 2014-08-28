@@ -65,9 +65,9 @@ spec = do
       define <? "(= (f x) (+ x 1))" `shouldParse`
       Factor [Atom "=",Factor [Atom "f",Atom "x"],Factor [Atom "+",Atom "x",Int 1]]
 
-    it "can parse lambda style definition : (= seq (-> (x y) y))" $
-      define <? "(= seq (-> (x y) y))" `shouldParse`
-      Factor [Atom "=",Atom "seq",Factor [Atom "->",Factor[Atom "x",Atom "y"] ,Atom "y"]]
+    it "can parse lambda style definition : (= seq (\\ (x y) y))" $
+      define <? "(= seq (\\ (x y) y))" `shouldParse`
+      Factor [Atom "=",Atom "seq",Factor [Atom "\\",Factor[Atom "x",Atom "y"] ,Atom "y"]]
 
   describe "declaration parser" $ do
 

@@ -56,8 +56,8 @@ instance Show Expr where
     Call e1 e2 -> '(' : showl " " (e1:e2) ++ ")"
 
     Lambda i as e -> case as of
-      [] -> "(-> " ++ show i ++ " " ++ show e ++ ")"
-      _  -> "(-> (" ++ showl " " (i:as) ++ ") " ++ show e ++ ")"
+      [] -> "(\\ " ++ show i ++ " " ++ show e ++ ")"
+      _  -> "(\\ (" ++ showl " " (i:as) ++ ") " ++ show e ++ ")"
 
     Arrow i as r
       -> "(-> " ++ showl " " (i : as ++ [r]) ++ ")"
