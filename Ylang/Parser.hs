@@ -72,10 +72,10 @@ arrow
 -- Parse Definition Syntax
 -- >>> parse define "<stdin>" "(= x 10)"
 -- Right (= x 10)
--- >>> parse define "<stdin>" "(= seq (-> (x y) y))"
--- Right (= seq (-> (x y) y))
--- >>> parse define "<stdin>" "(= add (-> (x y) (+ x y)))"
--- Right (= add (-> (x y) (+ x y)))
+-- >>> parse define "<stdin>" "(= seq (\\ (x y) y))"
+-- Right (= seq (\ (x y) y))
+-- >>> parse define "<stdin>" "(= add (\\ (x y) (+ x y)))"
+-- Right (= add (\ (x y) (+ x y)))
 -- >>> parse define "<stdin>" "(= (f x y) y)"
 -- Right (= (f x y) y)
 -- >>> parse define "<stdin>" "(= (f x y) (+ x y))"
@@ -92,18 +92,18 @@ define
 
 -- |
 -- Parse Closure Syntax
--- >>> parse closure "<stdin>" "(-> (x) x)"
--- Right (-> (x) x)
--- >>> parse closure "<stdin>" "(-> (x) [x])"
--- Right (-> (x) [x])
+-- >>> parse closure "<stdin>" "(\\ (x) x)"
+-- Right (\ (x) x)
+-- >>> parse closure "<stdin>" "(\\ (x) [x])"
+-- Right (\ (x) [x])
 closure :: Parser S.Expr
 closure = L.parens form
   <?> "(-> ({ARGS}) {BODY})"
   where
   form = do
-    L.reservedOp "->"
+    L.reservedOp "\\"
     es <- many expr
-    return $ S.Factor $ S.Atom "->" : es
+    return $ S.Factor $ S.Atom "\\" : es
 
 targ :: Parser S.Expr
 targ

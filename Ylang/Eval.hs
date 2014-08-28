@@ -1,196 +1,109 @@
 module Ylang.Eval where
 
-import Data.Set ((\\), Set)
-import qualified Data.Set as Set
+import Data.List (intercalate)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Ylang.Syntax
 
--- |
--- Find Free Variables from Lambda Expression
---
--- (-> x x) ... []
--- >>> freeVars $ Lambda (Atom "x") [] (Atom "x")
--- fromList []
---
--- (-> x y) ... [y]
--- >>> freeVars $ Lambda (Atom "x") [] (Atom "y")
--- fromList [y]
---
--- (-> (x y) [w,x,y,z]) ... [w,z]
--- >>> freeVars $ Lambda (Atom "x") [Atom "y"] $ Array [Atom "w",Atom "x",Atom "y",Atom "z"]
--- fromList [w,z]
---
--- (-> x (+ x 1))
--- >>> freeVars $ Lambda (Atom "x") [] $ Call (Atom "+") [Atom "x",Int 1]
--- fromList [+]
---
--- (-> x (+ y 1))
--- >>> freeVars $ Lambda (Atom "x") [] $ Call (Atom "+") [Atom "y",Int 1]
--- fromList [+,y]
---
--- ((-> y y) 1) ... []
--- >>> freeVars $ Call (Lambda (Atom "y") [] $ Atom "y") [Int 1]
--- fromList []
---
--- ((-> y x) 1) ... [x]
--- >>> freeVars $ Call (Lambda (Atom "y") [] $ Atom "x") [Int 1]
--- fromList [x]
---
-freeVars :: Expr -> Set Expr
-freeVars expr = case expr of
-  Atom _
-    -> Set.singleton expr
+data Env = Env {
+    name   :: Name
+  , frames :: [Name]
+  , scope  :: Map Expr Expr
+  }
 
-  Array es
-    -> collect es
+currentFrameName :: Env -> Name
+currentFrameName (Env n fs _) = case fs of
+  [] -> n
+  _  -> intercalate "." (n:(reverse fs))
 
-  Define f args expr'
-    -> (freeVars expr') \\ (Set.union (freeVars f) $ collect args)
+defaultEnv :: Env
+defaultEnv = Env {
+      name   = "TopLevel"
+    , frames = []
+    , scope  = Map.empty
+  }
 
-  Lambda i args expr'
-    -> (freeVars expr') \\ (collect (i:args))
+assign :: Env -> Expr -> Expr -> Env
+assign (Env n f s) sym expr =
+  let r = Map.insert sym expr s
+  in Env { name = n, frames = f, scope = r }
 
-  Call f args -> case f of
-    Lambda _ _ _
-      -> Set.union (freeVars f) $ collect args
+eval :: Env -> Expr -> (Env, Expr)
+eval env expr = case expr of
+  -- atomic
+  Boolean _ -> (env, expr)
+  Int     _ -> (env, expr)
+  Float   _ -> (env, expr)
+  Ratio   _ -> (env, expr)
+  String  _ -> (env, expr)
 
-    Atom _
-      -> Set.insert f $ collect args
+  -- collection
+  Pair _ _ -> (env, expr)
+  Array  _ -> (env, expr)
 
-    Call g args'
-      -> Set.union (freeVars g) $ collect args'
-    _
-      -> Set.empty
-  _ -- expression has not closed scope
-    -> Set.empty
+  -- factor
+  -- void
+  Factor [] -> (env, expr)
 
-  where
-  collect = foldr (Set.union . freeVars) Set.empty
+  -- identity
+  Factor (e:[]) -> eval env e
 
--- |
--- Alpha Conversion for Lambda Calculus
---
--- Convertable case:
--- (-> x ((-> x x) x)) ... (-> y ((-> x x) y))
--- >>> let g = Lambda (Atom "x") [] $ Atom "x"
--- >>> let f = Lambda (Atom "x") [] $ Call g [Atom "x"]
--- >>> alpha $ f
--- (-> y_0 ((-> x_0 x_0) y_0))
---
--- Not-Convertable case:
--- (-> x ((-> y x) x)) ... (-> x ((-> y x) x))
--- >>> let g = Lambda (Atom "y") [] $ Atom "x"
--- >>> let f = Lambda (Atom "x") [] $ Call g [Atom "x"]
--- >>> alpha $ f
--- (-> x ((-> y x) x))
---
-alpha :: Expr -> Expr
-alpha expr = case expr of
-  f@(Lambda y ys (Call g@(Lambda x xs ex) _))
-    | hasNotOutScopeBind g ->
-        let
-          (x':xs') = rename "x_" 0 [] (x:xs)
-          (y':ys') = rename "y_" 0 [] (y:ys)
-          ex' = apply (Map.fromList $ zip (x:xs) (x':xs')) ex
-        in Lambda y' ys' $ Call (Lambda x' xs' ex') (y':ys')
-    | otherwise -> f
-  _
-    -> expr
-  where
-  hasNotOutScopeBind g = Set.null $ freeVars g
+  -- applycation
+  Factor (f:args) -> case f of
+    -- declare (type binding)
+    Atom ":"  -> declaration env args
 
-builtins :: Map Expr Expr
-builtins = Map.fromList
-  [
-      (Atom "id", Lambda (Atom "x") [] (Atom "x"))
-    , (Atom "seq", Lambda (Atom "x") [Atom "y"] (Atom "y"))
-  ]
+    -- define (value binding)
+    Atom "="  -> definition  env args
 
--- |
--- Evaluate Expression
---
--- >>> let env = Map.empty
--- >>> snd $ eval env (Atom "x")
--- x
---
--- >>> let env  = Map.empty
--- >>> let func = Lambda (Atom "x") [] (Atom "x")
--- >>> let expr = Call func [Atom "y"]
--- >>> snd $ eval Map.empty expr
--- y
---
--- >>> let env = Map.fromList [(Atom "x",Int 100)]
--- >>> snd $ eval env (Atom "x")
--- 100
---
-eval :: Map Expr Expr -> Expr -> (Map Expr Expr, Expr)
-eval env (Call f args) = eval env $ applyf f args
-eval env expr =
-  let expr' = maybe expr id $ Map.lookup expr env
-  in (env, expr')
+    -- create function (not evaluate this time)
+    Atom "\\" -> anonymous   env args
 
--- |
--- Apply Function with Arguments
---
--- id : (-> x x)
--- >>> applyf (Lambda (Atom "x") [] (Atom "x")) [Int 10]
--- 10
---
-applyf :: Expr -> [Expr] -> Expr
-applyf expr args = case expr of
-  Lambda x@(Atom _) [] y@(Atom _)
-    | x == y      -> head args
-    | elem y args -> y
-    | otherwise   -> Array []
-  _ -> expr
+    -- other atomic something (maybe function)
+    g@(Atom _) ->
+      let (env', h) = apply env g args
+      in eval env' h
 
--- |
--- Rename Variable identifier
---
--- >>> let vars = [Atom "foo",Atom "bar"]
--- >>> rename "x_" 0 [] vars
--- [x_0,x_1]
---
--- >>> let a_list = Array [Atom "a",Atom "b"]
--- >>> let b_list = Array [Atom "c",Atom "d"]
--- >>> rename "x_" 0 [] [a_list, b_list]
--- [[x_0_0 x_0_1],[x_1_0 x_1_1]]
---
-rename :: String -> Int -> [Expr] -> [Expr] -> [Expr]
-rename p i rs es = case es of
-  []
-    -> reverse rs
-  v:vs
-    -> let (j, r) = rename' p i v
-       in rename p j (r:rs) vs
-  where
-  rename' :: String -> Int -> Expr -> (Int, Expr)
-  rename' q k ex = case ex of
-    Atom _
-      -> (k + 1, Atom $ q ++ show k)
+    -- nested expression
+    Factor (g:args') ->
+      let (env', h) = apply env g args'
+      in eval env' (Factor (h:args))
 
-    Array ys
-      -> (k + 1, Array $ rename (q ++ (show k) ++ "_") 0 [] ys)
+  Atom _ -> case Map.lookup expr (scope env) of
+    Just a  -> (env, a)
 
-    x -> (k, x)
+    -- TODO undefineded atom case
+    Nothing -> undefined
 
--- |
---
--- >>> let env = Map.fromList [(Atom "x",Int 1)]
--- >>> apply env $ Atom "x"
--- 1
---
--- >>> let env = Map.fromList [(Atom "x",Int 1)]
--- >>> apply env $ Array [Atom "x",Atom "x"]
--- [1 1]
---
-apply :: Map Expr Expr -> Expr -> Expr
-apply env expr = case expr of
-  v@(Atom _) -> maybe v id $ Map.lookup v env
-  Array xs   -> Array $ map (apply env) xs
-  Call f args
-    -> Call f $ map (apply env) args
+  _ -> (env, expr)
 
-  _ -> expr
+declaration :: Env -> [Expr] -> (Env, Expr)
+declaration = undefined
+
+definition :: Env -> [Expr] -> (Env, Expr)
+definition e (v@(Atom _):body) = case Map.lookup v (scope e) of
+  -- can assign
+  Nothing -> case body of
+    [x] -> (assign e v x, v)
+
+    -- TODO many factor case
+    _   -> undefined
+
+  -- cannot reassign
+  -- TODO should throw Error
+  Just _ -> undefined
+
+anonymous :: Env -> [Expr] -> (Env, Expr)
+anonymous = undefined
+
+apply :: Env -> Expr -> [Expr] -> (Env, Expr)
+apply e f [] = (e, f)
+
+apply e f@(Atom _) args = case Map.lookup f (scope e) of
+  Nothing -> undefined
+  Just g  ->
+    let (e', h) = eval e g
+    in eval e' (Factor (h:args))
+
+apply _ _ _ = undefined

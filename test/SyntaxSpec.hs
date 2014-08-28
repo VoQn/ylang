@@ -66,12 +66,12 @@ spec = do
     it "void ()" $
       show Void `shouldBe` "()"
 
-    it "lambda (-> x x)" $
-      show (Factor [Atom "->",Atom "x",Atom "x"]) `shouldBe` "(-> x x)"
+    it "lambda (\\ x x)" $
+      show (Factor [Atom "\\",Atom "x",Atom "x"]) `shouldBe` "(\\ x x)"
 
-    it "lambda (-> (x y) y)" $
-      show (Factor [Atom "->", Factor [Atom "x",Atom "y"],Atom "y"]) `shouldBe`
-      "(-> (x y) y)"
+    it "lambda (\\ (x y) y)" $
+      show (Factor [Atom "\\", Factor [Atom "x",Atom "y"],Atom "y"]) `shouldBe`
+      "(\\ (x y) y)"
 
     it "apply (f x y)" $
       show (Factor [Atom "f",Atom "x",Atom "y"]) `shouldBe`
