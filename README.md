@@ -24,7 +24,7 @@ ylang is Programming Language. Scheme like, but it is *NOT* _Lisp family_
 ; Eval Expression
 (<EXPR>)
 ```
-#### Literal
+#### Literal (Atomic)
 ```scheme
 ([])  ; Empty List
 (1)   ; Integer
@@ -32,25 +32,67 @@ ylang is Programming Language. Scheme like, but it is *NOT* _Lisp family_
 (1/2) ; Rational
 (yes) ; Boolean (true)
 (no)  ; Boolean (false)
+(:a)  ; Keyword
 ('a') ; Charactor
 ("a") ; String
 ```
+#### Collection
+```scheme
+(, 1 2) ; Pair
 
+;; List
+[]      ; Empty List
+
+[1 2 3] ; = (, 1 2 3 [])
+
+;; Examples
+(, 1 []) ; [1]
+(, [] 1) ; (, [] 1)
+(, [1 2] []) ; [[1 2]]
+```
 #### Builtin Operator
 ##### Definition
 ```scheme
-(:) ; Declare Type Binding (: x Int)
-(=) ; Define [Value / Function] (= (add x y) (+ x y))
-(->) ; Arrow (-> a a) -> FunctionType (a -> a)
+(:) ; Declare Type Binding
+(: x Int)
+
+(=) ; Define [Value / Function]
+(= x 10)
+(+ x x) ; 20
+
+(= (not x) (if x no yes))
+
+(not yes) ; no
+(not no)  ; yes
+
+;; Arrow (Function-Type)
+(->)
+
+(: add (: t Addible) (-> t t))
+
+(: VariadicType (-> Natural Set Set Set))
+(= (VariadicType 0 A B) B)
+(= (VariadicType (suc n) A B)
+   (-> A (VariadicType n A B)))
 ```
 ##### Function
 ```scheme
-(\) ; Lambda (((\ x) x) 1) -> (1)
-(.) ; Compose ((. f g) x) -> (f (g x))
+(\) ; Lambda
+(= id (\ x x))
+
+((\ x x) 1) ; => (1)
+
+(.) ; Compose
+((. f g) x) ; => (f (g x))
 ```
 ##### Collection
 ```scheme
-(,) ; Pair (, x []) -> [x]
+(,) ; Pair
+
+;; Examples
+(, x) ; (\ y (, x y))
+(, x []) ; => [x]
+(, [] x) ; => (, [] x)
 ```
 ##### Ordering
 ```scheme
@@ -82,17 +124,18 @@ ylang is Programming Language. Scheme like, but it is *NOT* _Lisp family_
 (+ x y)
 ; (: 30 Int)
 
-(((\ x) (+ x x)) 1)
+((\ x (+ x x)) 1)
 ; (: 2 Int)
-(((\ x) (+ x y)) 1)
+((\ x (+ x y)) 1)
 ; (: 21 Int)
 ```
 
 ### Declare, Define, Apply
 ```lisp
-(: (length [a]) Int)
+(: length (-> [a] Int))
 (= (length []) 0)
-(= (length (, x xs)) (+ (length xs) 1))
+(= (length (, x xs))
+   (+ (length xs) 1))
 
 (length [1 2 3 4 5])
 ; (: 5 Int)
