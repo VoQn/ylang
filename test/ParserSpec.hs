@@ -41,44 +41,44 @@ spec = do
 
     it "can parse binary : (a -> a)" $
       arrow <? "(-> a a)" `shouldParse`
-      Arrow (Atom "a") [] (Atom "a")
+      Factor [Atom "->",Atom "a",Atom "a"]
 
     it "can parse nested A : (-> a (-> b a))" $
       arrow <? "(-> a (-> b a))" `shouldParse`
-      Arrow (Atom "a") [Atom "b"] (Atom "a")
+      Factor [Atom "->",Atom "a",(Factor [Atom "->", Atom "b",Atom "a"])]
 
     it "can parse nested B : (-> (-> a b) a))" $
       arrow <? "(-> (-> a b) a)" `shouldParse`
-      Arrow (Atom "a") [Atom "b"] (Atom "a")
+      Factor [Atom "->",Factor[Atom "->",Atom "a",Atom "b"],Atom "a"]
 
   describe "definition parser" $ do
 
     it "can parse simple definition : (= x yes)" $
       define <? "(= x no)" `shouldParse`
-      Define (Atom "x") [] (Boolean False)
+      Factor [Atom "=",Atom "x",Boolean False]
 
     it "can parse function definition : (= (id x) x)" $
       define <? "(= (id x) x)" `shouldParse`
-      Define (Atom "id") [Atom "x"] (Atom "x")
+      Factor [Atom "=",Factor [Atom "id", Atom "x"],Atom "x"]
 
     it "can parse definition (has nested expression) : (= (f x) (+ x 1))" $
       define <? "(= (f x) (+ x 1))" `shouldParse`
-      Define (Atom "f") [Atom "x"] (Call (Atom "+") [Atom "x", Int 1])
+      Factor [Atom "=",Factor [Atom "f",Atom "x"],Factor [Atom "+",Atom "x",Int 1]]
 
     it "can parse lambda style definition : (= seq (-> (x y) y))" $
       define <? "(= seq (-> (x y) y))" `shouldParse`
-      Define (Atom "seq") [Atom "x", Atom "y"] (Atom "y")
+      Factor [Atom "=",Atom "seq",Factor [Atom "->",Factor[Atom "x",Atom "y"] ,Atom "y"]]
 
   describe "declaration parser" $ do
 
     it "can parse simple declaration : (: zero Int)" $
       declare <? "(: zero Int)" `shouldParse`
-      Declare (Atom "zero") [] (Atom "Int")
+      Factor [Atom ":",Atom "zero",Atom "Int"]
 
     it "can parse function declaration : (: (f a) a)" $
       declare <? "(: (f a) a)" `shouldParse`
-      Declare (Atom "f") [Atom "a"] (Atom "a")
+      Factor [Atom ":",Factor[Atom "f",Atom "a"],Atom "a"]
 
     it "can parse arrow type declaration : (: f (-> a a))" $
       declare <? "(: f (-> a a))" `shouldParse`
-      Declare (Atom "f") [Atom "a"] (Atom "a")
+      Factor [Atom ":",Atom "f",Factor [Atom "->",Atom "a",Atom "a"]]
