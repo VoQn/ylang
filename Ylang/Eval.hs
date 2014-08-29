@@ -8,14 +8,28 @@ import Control.Monad.Identity
 import Control.Monad.Error
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad.Writer
 
 import Ylang.Syntax
 
 type Env = Map.Map Name Expr
-type Eval a = ReaderT Env (ErrorT String (StateT Env Identity)) a
+type Eval a
+  = ReaderT Env (ErrorT String
+                (WriterT [String] (StateT Env Identity))) a
 
-runEval :: Env -> Eval a -> (Either String a, Env)
-runEval env evl = runIdentity (runStateT (runErrorT (runReaderT evl env)) env)
+type Result a b = ((Either String a, [String]), b)
+
+getResult :: Result a b -> Either String a
+getResult = fst . fst
+
+getEnv :: Result a b -> b
+getEnv = snd
+
+-- ((Either String a, [String]), Env)
+runEval :: Env -> Eval a -> Result a Env
+runEval env evl =
+  let state = runWriterT $ runErrorT $ runReaderT evl env
+  in runIdentity $ runStateT state env
 
 defaultEnv :: Env
 defaultEnv = Map.empty
@@ -45,6 +59,7 @@ eval expr = case expr of
 -}
 
   Atom n -> do
+    tell [n]
     env <- get
     case Map.lookup n env of
       Just x -> return x
