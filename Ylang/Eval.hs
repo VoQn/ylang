@@ -6,20 +6,22 @@ import qualified Data.Map as Map
 
 import Control.Monad.Identity
 import Control.Monad.Error
+import Control.Monad.Reader
+import Control.Monad.State
 
 import Ylang.Syntax
 
 type Env = Map.Map Name Expr
-type Eval a = ErrorT String Identity a
+type Eval a = ReaderT Env (ErrorT String Identity) a
 
-runEval :: Eval a -> Either String a
-runEval = runIdentity . runErrorT
+runEval :: Env -> Eval a -> Either String a
+runEval env evl = runIdentity (runErrorT (runReaderT evl env))
 
 defaultEnv :: Env
 defaultEnv = Map.empty
 
-eval :: Env -> Expr -> Eval Expr
-eval env expr = case expr of
+eval :: Expr -> Eval Expr
+eval expr = case expr of
   -- atomic
   Boolean _ -> return expr
   Int     _ -> return expr
@@ -29,8 +31,9 @@ eval env expr = case expr of
 
   -- collection
   Pair e1 e2 -> do
-    r1 <- eval env e1
-    r2 <- eval env e2
+    env <- ask
+    r1 <- eval e1
+    r2 <- eval e2
     return $ Pair r1 r2
 {-
   Array es ->
@@ -42,26 +45,28 @@ eval env expr = case expr of
     in return $ Array rs
 -}
   -- factor
-  Define n v -> case Map.lookup n env of
+  Define n v -> do
+    env <- ask
+    case Map.lookup n env of
 
-    -- already assigned
-    Just x ->
-      let
-        messages = [
-            "<Conflict Definition>",
-            "Already Defined ::",
-             show (Define n x),
-             "But Reassigned ::",
-             show (Define n v)
-          ]
-        message = intercalate " " messages
-      in throwError message
+      -- already assigned
+      Just x ->
+        let
+          messages = [
+              "<Conflict Definition>",
+              "Already Defined ::",
+              show (Define n x),
+              "But Reassigned ::",
+              show (Define n v)
+            ]
+          message = intercalate " " messages
+        in throwError message
 
-    -- can assign
-    Nothing -> do
-        v' <- eval env v
+      -- can assign
+      Nothing -> do
+        v' <- eval v
         let env' = Map.insert n v' env
-        eval env' (Atom n)
+        eval (Atom n)
 
   -- void
   Factor []     -> return expr
