@@ -20,7 +20,7 @@ data Expr
 
   -- factor
   | Void
-  | Factor  [Expr]
+  | Factor [Expr]
 
   -- anonymous function
   | Func {
@@ -77,7 +77,7 @@ instance Show Expr where
 
     -- factor
     Void -> "()"
-    Factor es -> '(' : showl " " es ++ ")"
+    Factor as -> wrapParen $ showl " " as
 
     Func { arg1 = i, args = as, prem = es, retn = r }
       ->  let

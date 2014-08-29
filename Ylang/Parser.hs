@@ -93,17 +93,25 @@ define
 -- |
 -- Parse Closure Syntax
 -- >>> parse closure "<stdin>" "(\\ (x) x)"
--- Right (\ (x) x)
+-- Right (\ x x)
 -- >>> parse closure "<stdin>" "(\\ (x) [x])"
--- Right (\ (x) [x])
+-- Right (\ x [x])
 closure :: Parser S.Expr
 closure = L.parens form
   <?> "(-> ({ARGS}) {BODY})"
   where
   form = do
     L.reservedOp "\\"
-    es <- many expr
-    return $ S.Factor $ S.Atom "\\" : es
+    (a:as) <- argsExpr
+    (r:es) <- bodyExpr <$> many expr
+    return $ S.Func a as es r
+  argsExpr = (try $ L.parens $ many targ) <|> ((:[]) <$> targ)
+  bodyExpr exps = case exps of
+    []  -> []
+    _  ->
+      let (r:rs) = reverse exps
+      in (r:(reverse rs))
+
 
 targ :: Parser S.Expr
 targ
@@ -114,7 +122,7 @@ targ
 -- |
 -- Parse Function Call (f x y z ...)
 -- >>> parse call "<stdin>" "(+)"
--- Right (+)
+-- Right +
 -- >>> parse call "<stdin>" "(+ 1 2 3)"
 -- Right (+ 1 2 3)
 -- >>> parse call "<stdin>" "(+ x y z)"
@@ -126,7 +134,10 @@ call = L.parens form
   form = do
     f <- caller
     args <- many expr
-    return $ S.Factor (f:args)
+    return $ modify f args
+  modify f as = case as of
+    [] -> f
+    _  -> S.Factor (f:as)
 
 caller :: Parser S.Expr
 caller

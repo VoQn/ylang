@@ -51,6 +51,28 @@ spec = do
       arrow <? "(-> (-> a b) a)" `shouldParse`
       Factor [Atom "->",Factor[Atom "->",Atom "a",Atom "b"],Atom "a"]
 
+  describe "closure parser" $ do
+
+    it "can parse simple function (\\ x x)" $
+      closure <? "(\\ x x)" `shouldParse`
+      Func (Atom "x") [] [] (Atom "x")
+
+    it "can parse multiple argument function (\\ (x y) y)" $
+      closure <? "(\\ (x y) y)" `shouldParse`
+      Func (Atom "x") [Atom "y"] [] (Atom "y")
+
+    it "can parse (\\ x y z)" $
+      closure <? "(\\ x y z)" `shouldParse`
+      Func (Atom "x") [] [Atom "y"] (Atom "z")
+
+    it "can parse (\\ x (y) z))" $
+      closure <? "(\\ x (y) z))" `shouldParse`
+      Func (Atom "x") [] [Atom "y"] (Atom "z")
+
+    it "can parse (\\ x (y z))" $
+      closure <? "(\\ x (y z))" `shouldParse`
+      Func (Atom "x") [] [] (Factor [Atom "y", Atom "z"])
+
   describe "definition parser" $ do
 
     it "can parse simple definition : (= x yes)" $
@@ -67,7 +89,7 @@ spec = do
 
     it "can parse lambda style definition : (= seq (\\ (x y) y))" $
       define <? "(= seq (\\ (x y) y))" `shouldParse`
-      Factor [Atom "=",Atom "seq",Factor [Atom "\\",Factor[Atom "x",Atom "y"] ,Atom "y"]]
+      Factor [Atom "=",Atom "seq",Func (Atom "x") [Atom "y"] [] (Atom "y")]
 
   describe "declaration parser" $ do
 
