@@ -27,7 +27,7 @@ spec = do
 
   describe "evaluate sharrow definition assign" $ do
 
-    let fact = Factor [Atom "=",Atom "x",Int 10]
+    let fact = Define "x" (Int 10)
     it "assign (= x 10)" $
       snd (eval defaultEnv fact) `shouldBe` Atom "x"
 

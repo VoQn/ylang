@@ -9,7 +9,7 @@ import Ylang.Syntax hiding (name)
 data Env = Env {
     name   :: Name
   , frames :: [Name]
-  , scope  :: Map Expr Expr
+  , scope  :: Map Name Expr
   }
 
 currentFrameName :: Env -> Name
@@ -24,7 +24,7 @@ defaultEnv = Env {
     , scope  = Map.empty
   }
 
-assign :: Env -> Expr -> Expr -> Env
+assign :: Env -> Name -> Expr -> Env
 assign (Env n f s) sym expr =
   let r = Map.insert sym expr s
   in Env { name = n, frames = f, scope = r }
@@ -43,6 +43,8 @@ eval env expr = case expr of
   Array  _ -> (env, expr)
 
   -- factor
+  Define n v -> definition env n v
+
   -- void
   Factor [] -> (env, expr)
 
@@ -54,11 +56,8 @@ eval env expr = case expr of
     -- declare (type binding)
     Atom ":"  -> declaration env args
 
-    -- define (value binding)
-    Atom "="  -> definition  env args
-
     -- create function (not evaluate this time)
-    Atom "\\" -> anonymous   env args
+    Func a as es r -> anonymous env (a:as) es r args
 
     -- other atomic something (maybe function)
     g@(Atom _) ->
@@ -70,7 +69,7 @@ eval env expr = case expr of
       let (env', h) = apply env g args'
       in eval env' (Factor (h:args))
 
-  Atom _ -> case Map.lookup expr (scope env) of
+  Atom n -> case Map.lookup n (scope env) of
     Just a  -> (env, a)
 
     -- TODO undefineded atom case
@@ -81,26 +80,30 @@ eval env expr = case expr of
 declaration :: Env -> [Expr] -> (Env, Expr)
 declaration = undefined
 
-definition :: Env -> [Expr] -> (Env, Expr)
-definition e (v@(Atom _):body) = case Map.lookup v (scope e) of
+definition :: Env -> Name -> Expr -> (Env, Expr)
+definition e v body = case Map.lookup v (scope e) of
   -- can assign
-  Nothing -> case body of
-    [x] -> (assign e v x, v)
-
-    -- TODO many factor case
-    _   -> undefined
+  Nothing -> let e' = assign e v body in (e', Atom v)
 
   -- cannot reassign
   -- TODO should throw Error
   Just _ -> undefined
 
-anonymous :: Env -> [Expr] -> (Env, Expr)
-anonymous = undefined
+-- anonymous :: Env -> Expr -> [Expr] -> (Env, Expr)
+anonymous e vs es r as
+  | length vs == length as = -- apply and return
+      undefined
+
+  | length vs > length as = -- partial apply
+      undefined
+
+  | otherwise = -- arity over
+      undefined
 
 apply :: Env -> Expr -> [Expr] -> (Env, Expr)
 apply e f [] = (e, f)
 
-apply e f@(Atom _) args = case Map.lookup f (scope e) of
+apply e (Atom n) args = case Map.lookup n (scope e) of
   Nothing -> undefined
   Just g  ->
     let (e', h) = eval e g
