@@ -5,19 +5,20 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Control.Monad.Identity
+import Control.Monad.Error
 
 import Ylang.Syntax
 
 type Env = Map.Map Name Expr
-type Eval a = Identity a
+type Eval a = ErrorT String Identity a
 
-runEval :: Eval a -> a
-runEval = runIdentity
+runEval :: Eval a -> Either String a
+runEval = runIdentity . runErrorT
 
 defaultEnv :: Env
 defaultEnv = Map.empty
 
-eval :: Monad m => Env -> Expr -> m Expr
+eval :: Env -> Expr -> Eval Expr
 eval env expr = case expr of
   -- atomic
   Boolean _ -> return expr
@@ -31,27 +32,30 @@ eval env expr = case expr of
     r1 <- eval env e1
     r2 <- eval env e2
     return $ Pair r1 r2
-
+{-
   Array es ->
     let
       rs = do
         e <- es
-        r <- eval env e
+        r <- return $ eval env e
         return $ r
     in return $ Array rs
-
+-}
   -- factor
   Define n v -> case Map.lookup n env of
 
     -- already assigned
     Just x ->
       let
-        e1 = "<Conflict Definition> "
-        e2 = "Already Defined :: "
-        e3 = "But Reassigned :: "
-        ex = show $ Define n x
-        ev = show $ Define n v
-      in fail $ intercalate " " [e1,e2,ex,e3,ev]
+        messages = [
+            "<Conflict Definition>",
+            "Already Defined ::",
+             show (Define n x),
+             "But Reassigned ::",
+             show (Define n v)
+          ]
+        message = intercalate " " messages
+      in throwError message
 
     -- can assign
     Nothing -> do
