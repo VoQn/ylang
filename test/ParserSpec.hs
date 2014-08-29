@@ -77,19 +77,19 @@ spec = do
 
     it "can parse simple definition : (= x yes)" $
       define <? "(= x no)" `shouldParse`
-      Factor [Atom "=",Atom "x",Boolean False]
+      Define "x" (Boolean False)
 
     it "can parse function definition : (= (id x) x)" $
       define <? "(= (id x) x)" `shouldParse`
-      Factor [Atom "=",Factor [Atom "id", Atom "x"],Atom "x"]
+      Define "id" (Func (Atom "x") [] [] (Atom "x"))
 
     it "can parse definition (has nested expression) : (= (f x) (+ x 1))" $
       define <? "(= (f x) (+ x 1))" `shouldParse`
-      Factor [Atom "=",Factor [Atom "f",Atom "x"],Factor [Atom "+",Atom "x",Int 1]]
+      Define "f" (Func (Atom "x") [] [] (Factor [Atom "+",Atom "x",Int 1]))
 
     it "can parse lambda style definition : (= seq (\\ (x y) y))" $
       define <? "(= seq (\\ (x y) y))" `shouldParse`
-      Factor [Atom "=",Atom "seq",Func (Atom "x") [Atom "y"] [] (Atom "y")]
+      Define "seq" (Func (Atom "x") [Atom "y"] [] (Atom "y"))
 
   describe "declaration parser" $ do
 

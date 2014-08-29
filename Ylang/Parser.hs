@@ -73,9 +73,9 @@ arrow
 -- >>> parse define "<stdin>" "(= x 10)"
 -- Right (= x 10)
 -- >>> parse define "<stdin>" "(= seq (\\ (x y) y))"
--- Right (= seq (\ (x y) y))
+-- Right (= (seq x y) y)
 -- >>> parse define "<stdin>" "(= add (\\ (x y) (+ x y)))"
--- Right (= add (\ (x y) (+ x y)))
+-- Right (= (add x y) (+ x y))
 -- >>> parse define "<stdin>" "(= (f x y) y)"
 -- Right (= (f x y) y)
 -- >>> parse define "<stdin>" "(= (f x y) (+ x y))"
@@ -87,8 +87,23 @@ define
   where
   form = do
     L.reservedOp "="
-    es <- many expr
-    return $ S.Factor $ (S.Atom "=") : es
+    (v,e) <- lambdaExpr <|> exampleExpr
+    return $ S.Define (getName v) e
+  lambdaExpr = do
+    i <- (try variable <|> operator)
+    f <- (try closure <|> expr)
+    return (i, f)
+  exampleExpr = do
+    (f:a:as) <- L.parens $ many targ
+    (r:es)   <- bodyExpr <$> many expr
+    return (f, S.Func a as es r)
+  bodyExpr exps = case exps of
+    [] -> []
+    _ ->
+      let (r:rs) = reverse exps in r : reverse rs
+  getName v = case v of
+    S.Atom n -> n
+    _ -> undefined
 
 -- |
 -- Parse Closure Syntax
@@ -109,8 +124,7 @@ closure = L.parens form
   bodyExpr exps = case exps of
     []  -> []
     _  ->
-      let (r:rs) = reverse exps
-      in (r:(reverse rs))
+      let (r:rs) = reverse exps in r : reverse rs
 
 
 targ :: Parser S.Expr
