@@ -12,10 +12,10 @@ import Control.Monad.State
 import Ylang.Syntax
 
 type Env = Map.Map Name Expr
-type Eval a = ReaderT Env (ErrorT String Identity) a
+type Eval a = ReaderT Env (ErrorT String (StateT Env Identity)) a
 
-runEval :: Env -> Eval a -> Either String a
-runEval env evl = runIdentity (runErrorT (runReaderT evl env))
+runEval :: Env -> Eval a -> (Either String a, Env)
+runEval env evl = runIdentity (runStateT (runErrorT (runReaderT evl env)) env)
 
 defaultEnv :: Env
 defaultEnv = Map.empty
@@ -31,7 +31,6 @@ eval expr = case expr of
 
   -- collection
   Pair e1 e2 -> do
-    env <- ask
     r1 <- eval e1
     r2 <- eval e2
     return $ Pair r1 r2
@@ -44,29 +43,18 @@ eval expr = case expr of
         return $ r
     in return $ Array rs
 -}
-  -- factor
-  Define n v -> do
-    env <- ask
+
+  Atom n -> do
+    env <- get
     case Map.lookup n env of
+      Just x -> return x
+      Nothing ->
+        throwError ("<Undefined Value> : " ++ n)
 
-      -- already assigned
-      Just x ->
-        let
-          messages = [
-              "<Conflict Definition>",
-              "Already Defined ::",
-              show (Define n x),
-              "But Reassigned ::",
-              show (Define n v)
-            ]
-          message = intercalate " " messages
-        in throwError message
+  f@(Func _ _ _ _) -> return expr
 
-      -- can assign
-      Nothing -> do
-        v' <- eval v
-        let env' = Map.insert n v' env
-        eval (Atom n)
+  -- factor
+  Define n v -> tryAssign n v
 
   -- void
   Factor []     -> return expr
@@ -78,6 +66,30 @@ eval expr = case expr of
   Factor (f:args) -> undefined
 
   _ -> return expr
+
+tryAssign :: Name -> Expr -> Eval Expr
+tryAssign n v = do
+  env <- get
+  case Map.lookup n env of
+
+    -- already assigned
+    Just x ->
+      let
+        messages = [
+            "<Conflict Definition>",
+            "Already Defined ::",
+            show (Define n x),
+            "But Reassigned ::",
+            show (Define n v)
+          ]
+        message = intercalate " " messages
+      in throwError message
+
+    -- can assign
+    Nothing -> do
+      v' <- eval v
+      put $ Map.insert n v' env
+      return $ Atom n
 
 declaration :: Env -> [Expr] -> (Env, Expr)
 declaration = undefined
