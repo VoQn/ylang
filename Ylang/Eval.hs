@@ -4,106 +4,118 @@ import Data.List (intercalate)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+import Control.Monad.Identity
+import Control.Monad.Error
+import Control.Monad.Reader
+import Control.Monad.State
+import Control.Monad.Writer
+
 import Ylang.Syntax
 
-data Env = Env {
-    name   :: Name
-  , frames :: [Name]
-  , scope  :: Map Expr Expr
-  }
+type Env = Map.Map Name Expr
+type Eval a
+  = ReaderT Env (ErrorT String
+                (WriterT [String] (StateT Env Identity))) a
 
-currentFrameName :: Env -> Name
-currentFrameName (Env n fs _) = case fs of
-  [] -> n
-  _  -> intercalate "." (n:(reverse fs))
+type Result a b = ((Either String a, [String]), b)
+
+getResult :: Result a b -> Either String a
+getResult = fst . fst
+
+getEnv :: Result a b -> b
+getEnv = snd
+
+-- ((Either String a, [String]), Env)
+runEval :: Env -> Eval a -> Result a Env
+runEval env evl =
+  let state = runWriterT $ runErrorT $ runReaderT evl env
+  in runIdentity $ runStateT state env
 
 defaultEnv :: Env
-defaultEnv = Env {
-      name   = "TopLevel"
-    , frames = []
-    , scope  = Map.empty
-  }
+defaultEnv = Map.empty
 
-assign :: Env -> Expr -> Expr -> Env
-assign (Env n f s) sym expr =
-  let r = Map.insert sym expr s
-  in Env { name = n, frames = f, scope = r }
-
-eval :: Env -> Expr -> (Env, Expr)
-eval env expr = case expr of
+eval :: Expr -> Eval Expr
+eval expr = case expr of
   -- atomic
-  Boolean _ -> (env, expr)
-  Int     _ -> (env, expr)
-  Float   _ -> (env, expr)
-  Ratio   _ -> (env, expr)
-  String  _ -> (env, expr)
+  Boolean _ -> return expr
+  Int     _ -> return expr
+  Float   _ -> return expr
+  Ratio   _ -> return expr
+  String  _ -> return expr
 
   -- collection
-  Pair _ _ -> (env, expr)
-  Array  _ -> (env, expr)
+  Pair e1 e2 -> do
+    r1 <- eval e1
+    r2 <- eval e2
+    return $ Pair r1 r2
+{-
+  Array es ->
+    let
+      rs = do
+        e <- es
+        r <- return $ eval env e
+        return $ r
+    in return $ Array rs
+-}
+
+  Atom n -> do
+    tell [n]
+    env <- get
+    case Map.lookup n env of
+      Just x -> return x
+      Nothing ->
+        throwError ("<Undefined Value> : " ++ n)
+
+  f@(Func _ _ _ _) -> return expr
 
   -- factor
+  Define n v -> tryAssign n v
+
   -- void
-  Factor [] -> (env, expr)
+  Factor []     -> return expr
 
   -- identity
-  Factor (e:[]) -> eval env e
+  Factor (e:[]) -> return e
 
   -- applycation
-  Factor (f:args) -> case f of
-    -- declare (type binding)
-    Atom ":"  -> declaration env args
+  Factor (f:args) -> undefined
 
-    -- define (value binding)
-    Atom "="  -> definition  env args
+  _ -> return expr
 
-    -- create function (not evaluate this time)
-    Atom "\\" -> anonymous   env args
+tryAssign :: Name -> Expr -> Eval Expr
+tryAssign n v = do
+  env <- get
+  case Map.lookup n env of
 
-    -- other atomic something (maybe function)
-    g@(Atom _) ->
-      let (env', h) = apply env g args
-      in eval env' h
+    -- already assigned
+    Just x ->
+      let
+        messages = [
+            "<Conflict Definition>",
+            "Already Defined ::",
+            show (Define n x),
+            "But Reassigned ::",
+            show (Define n v)
+          ]
+        message = intercalate " " messages
+      in throwError message
 
-    -- nested expression
-    Factor (g:args') ->
-      let (env', h) = apply env g args'
-      in eval env' (Factor (h:args))
-
-  Atom _ -> case Map.lookup expr (scope env) of
-    Just a  -> (env, a)
-
-    -- TODO undefineded atom case
-    Nothing -> undefined
-
-  _ -> (env, expr)
+    -- can assign
+    Nothing -> do
+      v' <- eval v
+      put $ Map.insert n v' env
+      return $ Atom n
 
 declaration :: Env -> [Expr] -> (Env, Expr)
 declaration = undefined
 
-definition :: Env -> [Expr] -> (Env, Expr)
-definition e (v@(Atom _):body) = case Map.lookup v (scope e) of
-  -- can assign
-  Nothing -> case body of
-    [x] -> (assign e v x, v)
+-- anonymous :: Env -> Expr -> [Expr] -> (Env, Expr)
+anonymous e vs es r as
+  | length vs == length as = -- apply and return
+      undefined
 
-    -- TODO many factor case
-    _   -> undefined
+  | length vs > length as = -- partial apply
+      undefined
 
-  -- cannot reassign
-  -- TODO should throw Error
-  Just _ -> undefined
-
-anonymous :: Env -> [Expr] -> (Env, Expr)
-anonymous = undefined
-
-apply :: Env -> Expr -> [Expr] -> (Env, Expr)
-apply e f [] = (e, f)
-
-apply e f@(Atom _) args = case Map.lookup f (scope e) of
-  Nothing -> undefined
-  Just g  ->
-    let (e', h) = eval e g
-    in eval e' (Factor (h:args))
-
-apply _ _ _ = undefined
+  | otherwise = -- arity over
+      undefined

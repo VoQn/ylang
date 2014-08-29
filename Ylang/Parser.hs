@@ -73,9 +73,9 @@ arrow
 -- >>> parse define "<stdin>" "(= x 10)"
 -- Right (= x 10)
 -- >>> parse define "<stdin>" "(= seq (\\ (x y) y))"
--- Right (= seq (\ (x y) y))
+-- Right (= (seq x y) y)
 -- >>> parse define "<stdin>" "(= add (\\ (x y) (+ x y)))"
--- Right (= add (\ (x y) (+ x y)))
+-- Right (= (add x y) (+ x y))
 -- >>> parse define "<stdin>" "(= (f x y) y)"
 -- Right (= (f x y) y)
 -- >>> parse define "<stdin>" "(= (f x y) (+ x y))"
@@ -87,23 +87,45 @@ define
   where
   form = do
     L.reservedOp "="
-    es <- many expr
-    return $ S.Factor $ (S.Atom "=") : es
+    (v,e) <- lambdaExpr <|> exampleExpr
+    return $ S.Define (getName v) e
+  lambdaExpr = do
+    i <- (try variable <|> operator)
+    f <- (try closure <|> expr)
+    return (i, f)
+  exampleExpr = do
+    (f:a:as) <- L.parens $ many targ
+    (r:es)   <- bodyExpr <$> many expr
+    return (f, S.Func a as es r)
+  bodyExpr exps = case exps of
+    [] -> []
+    _ ->
+      let (r:rs) = reverse exps in r : reverse rs
+  getName v = case v of
+    S.Atom n -> n
+    _ -> undefined
 
 -- |
 -- Parse Closure Syntax
 -- >>> parse closure "<stdin>" "(\\ (x) x)"
--- Right (\ (x) x)
+-- Right (\ x x)
 -- >>> parse closure "<stdin>" "(\\ (x) [x])"
--- Right (\ (x) [x])
+-- Right (\ x [x])
 closure :: Parser S.Expr
 closure = L.parens form
   <?> "(-> ({ARGS}) {BODY})"
   where
   form = do
     L.reservedOp "\\"
-    es <- many expr
-    return $ S.Factor $ S.Atom "\\" : es
+    (a:as) <- argsExpr
+    (r:es) <- bodyExpr <$> many expr
+    return $ S.Func a as es r
+  argsExpr = (try $ L.parens $ many targ) <|> ((:[]) <$> targ)
+  bodyExpr exps = case exps of
+    []  -> []
+    _  ->
+      let (r:rs) = reverse exps in r : reverse rs
+
 
 targ :: Parser S.Expr
 targ
@@ -114,7 +136,7 @@ targ
 -- |
 -- Parse Function Call (f x y z ...)
 -- >>> parse call "<stdin>" "(+)"
--- Right (+)
+-- Right +
 -- >>> parse call "<stdin>" "(+ 1 2 3)"
 -- Right (+ 1 2 3)
 -- >>> parse call "<stdin>" "(+ x y z)"
@@ -126,7 +148,10 @@ call = L.parens form
   form = do
     f <- caller
     args <- many expr
-    return $ S.Factor (f:args)
+    return $ modify f args
+  modify f as = case as of
+    [] -> f
+    _  -> S.Factor (f:as)
 
 caller :: Parser S.Expr
 caller

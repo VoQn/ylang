@@ -66,11 +66,11 @@ spec = do
     it "void ()" $
       show Void `shouldBe` "()"
 
-    it "lambda (\\ x x)" $
-      show (Factor [Atom "\\",Atom "x",Atom "x"]) `shouldBe` "(\\ x x)"
+    it "Func (\\ x x)" $
+      show (Func (Atom "x") [] [] (Atom "x")) `shouldBe` "(\\ x x)"
 
-    it "lambda (\\ (x y) y)" $
-      show (Factor [Atom "\\", Factor [Atom "x",Atom "y"],Atom "y"]) `shouldBe`
+    it "Func (\\ (x y) y)" $
+      show (Func (Atom "x") [Atom "y"] [] (Atom "y")) `shouldBe`
       "(\\ (x y) y)"
 
     it "apply (f x y)" $
@@ -90,11 +90,11 @@ spec = do
       "(-> (A B) C)"
 
     it "define (= x 10)" $
-      show (Factor [Atom "=",Atom "x",Int 10]) `shouldBe`
+      show (Define "x" $ Int 10) `shouldBe`
       "(= x 10)"
 
     it "define (= (f x) x)" $
-      show (Factor [Atom "=",Factor [Atom "f",Atom "x"], Atom "x"]) `shouldBe`
+      show (Define "f" $ Func (Atom "x") [] [] (Atom "x")) `shouldBe`
       "(= (f x) x)"
 
     it "declare (: x Int)" $
@@ -104,3 +104,10 @@ spec = do
     it "declare (: (f A) B)" $
       show (Factor [Atom ":",Factor [Atom "f",Atom "A"],Atom "B"]) `shouldBe`
       "(: (f A) B)"
+
+  describe "currying function" $ do
+
+    it "currying (\\ (x y) y) => (\\ x (\\ y y))" $ do
+      let f = Func (Atom "x") [Atom "y"] [] (Atom "y")
+      let g = Func (Atom "x") [] [] (Func (Atom "y") [] [] (Atom "y"))
+      currying f `shouldBe` g

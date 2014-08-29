@@ -51,23 +51,45 @@ spec = do
       arrow <? "(-> (-> a b) a)" `shouldParse`
       Factor [Atom "->",Factor[Atom "->",Atom "a",Atom "b"],Atom "a"]
 
+  describe "closure parser" $ do
+
+    it "can parse simple function (\\ x x)" $
+      closure <? "(\\ x x)" `shouldParse`
+      Func (Atom "x") [] [] (Atom "x")
+
+    it "can parse multiple argument function (\\ (x y) y)" $
+      closure <? "(\\ (x y) y)" `shouldParse`
+      Func (Atom "x") [Atom "y"] [] (Atom "y")
+
+    it "can parse (\\ x y z)" $
+      closure <? "(\\ x y z)" `shouldParse`
+      Func (Atom "x") [] [Atom "y"] (Atom "z")
+
+    it "can parse (\\ x (y) z))" $
+      closure <? "(\\ x (y) z))" `shouldParse`
+      Func (Atom "x") [] [Atom "y"] (Atom "z")
+
+    it "can parse (\\ x (y z))" $
+      closure <? "(\\ x (y z))" `shouldParse`
+      Func (Atom "x") [] [] (Factor [Atom "y", Atom "z"])
+
   describe "definition parser" $ do
 
     it "can parse simple definition : (= x yes)" $
       define <? "(= x no)" `shouldParse`
-      Factor [Atom "=",Atom "x",Boolean False]
+      Define "x" (Boolean False)
 
     it "can parse function definition : (= (id x) x)" $
       define <? "(= (id x) x)" `shouldParse`
-      Factor [Atom "=",Factor [Atom "id", Atom "x"],Atom "x"]
+      Define "id" (Func (Atom "x") [] [] (Atom "x"))
 
     it "can parse definition (has nested expression) : (= (f x) (+ x 1))" $
       define <? "(= (f x) (+ x 1))" `shouldParse`
-      Factor [Atom "=",Factor [Atom "f",Atom "x"],Factor [Atom "+",Atom "x",Int 1]]
+      Define "f" (Func (Atom "x") [] [] (Factor [Atom "+",Atom "x",Int 1]))
 
     it "can parse lambda style definition : (= seq (\\ (x y) y))" $
       define <? "(= seq (\\ (x y) y))" `shouldParse`
-      Factor [Atom "=",Atom "seq",Factor [Atom "\\",Factor[Atom "x",Atom "y"] ,Atom "y"]]
+      Define "seq" (Func (Atom "x") [Atom "y"] [] (Atom "y"))
 
   describe "declaration parser" $ do
 
