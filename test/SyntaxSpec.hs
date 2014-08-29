@@ -90,11 +90,11 @@ spec = do
       "(-> (A B) C)"
 
     it "define (= x 10)" $
-      show (Factor [Atom "=",Atom "x",Int 10]) `shouldBe`
+      show (Define "x" $ Int 10) `shouldBe`
       "(= x 10)"
 
     it "define (= (f x) x)" $
-      show (Factor [Atom "=",Factor [Atom "f",Atom "x"], Atom "x"]) `shouldBe`
+      show (Define "f" $ Func (Atom "x") [] [] (Atom "x")) `shouldBe`
       "(= (f x) x)"
 
     it "declare (: x Int)" $

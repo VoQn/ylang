@@ -4,7 +4,7 @@ import Data.List (intercalate)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-import Ylang.Syntax
+import Ylang.Syntax hiding (name)
 
 data Env = Env {
     name   :: Name

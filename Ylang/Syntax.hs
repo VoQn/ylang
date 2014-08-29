@@ -30,10 +30,13 @@ data Expr
       retn :: Expr
     }
 
+  | Define {
+      name :: Name,
+      retn :: Expr
+    }
   -- redundant
   | Call    Expr [Expr]
   | Arrow   Expr [Expr] Expr
-  | Define  Expr [Expr] Expr
   | Declare Expr [Expr] Expr
   deriving (Eq, Ord)
 
@@ -87,7 +90,7 @@ instance Show Expr where
             es' = case es of
               [] -> show r
               _  -> wrapParen $ showl " " (es ++ [r])
-          in wrapParen $ intercalate " " ["\\" , as', es']
+          in wrapParens ["\\" , as', es']
 
     -- redundant
     Call e1 e2 -> '(' : showl " " (e1:e2) ++ ")"
@@ -95,9 +98,14 @@ instance Show Expr where
     Arrow i as r
       -> "(-> " ++ showl " " (i : as ++ [r]) ++ ")"
 
-    Define n as e -> case as of
-      [] -> "(= "  ++ showl " " (n:[e]) ++ ")"
-      _  -> "(= (" ++ showl " " (n:as)  ++ ") " ++ show e ++ ")"
+    Define n v -> case v of
+        Func i as es r ->
+          let func = wrapParens $ n : (map show (i:as))
+              body = case es of
+                [] -> show r
+                _  -> wrapParen $ showl " " (es ++ [r])
+          in wrapParens ["=", func, body]
+        _ -> wrapParens ["=", n, show v]
 
     Declare n as e -> case as of
       [] -> "(: "  ++ showl " " (n:[e]) ++ ")"
@@ -106,3 +114,4 @@ instance Show Expr where
     where
     showl s = intercalate s . map show
     wrapParen s = '(' : s ++ ")"
+    wrapParens = wrapParen . intercalate " "
