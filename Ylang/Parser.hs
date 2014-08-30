@@ -46,27 +46,38 @@ factor
 -- |
 -- >>> parse declare "<stdin>" "(: x Int)"
 -- Right (: x Int)
--- >>> parse declare "<stdin>" "(: (add Int Int) Int)"
--- Right (: (add Int Int) Int)
 -- >>> parse declare "<stdin>" "(: add (-> Int Int Int))"
 -- Right (: add (-> Int Int Int))
 -- >>> parse declare "<stdin>" "(: add (-> (-> Int Int) Int))"
 -- Right (: add (-> (-> Int Int) Int))
 declare :: Parser S.Expr
-declare = L.parens form
+declare = (L.parens $ L.reserved ":" >> (try simple <|> funcType))
   <?> "Declaration Expression"
   where
-  form = do
-    L.reservedOp ":"
-    es <- many expr
-    return $ S.Factor $ (S.Atom ":") : es
+  simple = do
+    (S.Atom n) <- (try variable <|> operator)
+    r <- targ
+    return $ S.Declare n [] [] r
+  funcType = do
+    (S.Atom n) <- (try variable <|> operator)
+    (S.Arrow t ts r)    <- arrow
+    return $ S.Declare n [] (t:ts) r
 
 arrow :: Parser S.Expr
-arrow
-  = L.parens $ do
+arrow = L.parens form
+  where
+  form = do
     L.reservedOp "->"
-    ts <- many1 (try arrow <|> variable)
-    return $ S.Factor $ (S.Atom "->") : ts
+    f <- (try arrow <|> targ)
+    s <- (try arrow <|> targ)
+    r <- many (try arrow <|> targ)
+    return $ modify f s r
+  modify f s rs  = case rs of
+    []  -> S.Arrow f [] s
+    [r] -> S.Arrow f [s] r
+    _   ->
+      let (r':rs') = reverse rs
+      in S.Arrow f (s:rs') r'
 
 -- |
 -- Parse Definition Syntax

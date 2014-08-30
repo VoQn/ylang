@@ -29,6 +29,9 @@ data Expr
       prem :: [Expr],
       retn :: Expr
     }
+
+  | Arrow Expr [Expr] Expr
+
   -- declaration
   | Declare {
       name :: Name,
@@ -43,7 +46,7 @@ data Expr
     }
   -- redundant
   | Call    Expr [Expr]
-  | Arrow   Expr [Expr] Expr
+
   deriving (Eq, Ord)
 
 showRatio :: Rational -> String

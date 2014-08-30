@@ -39,17 +39,21 @@ spec = do
 
   describe "arrow type parser" $ do
 
-    it "can parse binary : (a -> a)" $
+    it "can parse binary : (-> a a)" $
       arrow <? "(-> a a)" `shouldParse`
-      Factor [Atom "->",Atom "a",Atom "a"]
+      Arrow (Atom "a") [] (Atom "a")
+
+    it "can parse multiple : (-> a b a)" $
+      arrow <? "(-> a b a)" `shouldParse`
+      Arrow (Atom "a") [Atom "b"] (Atom "a")
 
     it "can parse nested A : (-> a (-> b a))" $
       arrow <? "(-> a (-> b a))" `shouldParse`
-      Factor [Atom "->",Atom "a",(Factor [Atom "->", Atom "b",Atom "a"])]
+      Arrow (Atom "a") [] (Arrow (Atom "b") [] (Atom "a"))
 
     it "can parse nested B : (-> (-> a b) a))" $
       arrow <? "(-> (-> a b) a)" `shouldParse`
-      Factor [Atom "->",Factor[Atom "->",Atom "a",Atom "b"],Atom "a"]
+      Arrow (Arrow (Atom "a") [] (Atom "b")) [] (Atom "a")
 
   describe "closure parser" $ do
 
@@ -95,12 +99,8 @@ spec = do
 
     it "can parse simple declaration : (: zero Int)" $
       declare <? "(: zero Int)" `shouldParse`
-      Factor [Atom ":",Atom "zero",Atom "Int"]
-
-    it "can parse function declaration : (: (f a) a)" $
-      declare <? "(: (f a) a)" `shouldParse`
-      Factor [Atom ":",Factor[Atom "f",Atom "a"],Atom "a"]
+      Declare "zero" [] [] (Atom "Int")
 
     it "can parse arrow type declaration : (: f (-> a a))" $
       declare <? "(: f (-> a a))" `shouldParse`
-      Factor [Atom ":",Atom "f",Factor [Atom "->",Atom "a",Atom "a"]]
+      Declare "f" [] [Atom "a"] (Atom "a")
