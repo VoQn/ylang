@@ -98,12 +98,21 @@ spec = do
       "(= (f x) x)"
 
     it "declare (: x Int)" $
-      show (Factor [Atom ":",Atom "x",Atom "Int"]) `shouldBe`
+      show (Declare "x" [] [] $ Atom "Int") `shouldBe`
       "(: x Int)"
 
-    it "declare (: (f A) B)" $
-      show (Factor [Atom ":",Factor [Atom "f",Atom "A"],Atom "B"]) `shouldBe`
-      "(: (f A) B)"
+    it "declare (: f (-> A B))" $
+      show (Declare "f" [] [Atom "A"] $ Atom "B") `shouldBe`
+      "(: f (-> A B))"
+
+    it "declare (: f (-> A B C))" $
+      show (Declare "f" [] [Atom "A",Atom "B"] $ Atom "C") `shouldBe`
+      "(: f (-> A B C))"
+
+    it "declare (: f (: t A) (-> t t)))" $ do
+      let premises = [Declare "t" [] [] (Atom "A")]
+      let expr = Declare "f" premises [Atom "t"] $ Atom "t"
+      show expr `shouldBe` "(: f (: t A) (-> t t))"
 
   describe "currying function" $ do
 

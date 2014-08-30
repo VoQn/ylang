@@ -30,14 +30,23 @@ data Expr
       retn :: Expr
     }
 
+  | Arrow Expr [Expr] Expr
+
+  -- declaration
+  | Declare {
+      name :: Name,
+      prem :: [Expr],
+      argT :: [Expr],
+      retT :: Expr
+    }
+  -- definition
   | Define {
       name :: Name,
       retn :: Expr
     }
   -- redundant
   | Call    Expr [Expr]
-  | Arrow   Expr [Expr] Expr
-  | Declare Expr [Expr] Expr
+
   deriving (Eq, Ord)
 
 showRatio :: Rational -> String
@@ -82,15 +91,15 @@ instance Show Expr where
     Void -> "()"
     Factor as -> wrapParen $ showl " " as
 
-    Func { arg1 = i, args = as, prem = es, retn = r }
-      ->  let
-            as' = case as of
-              [] -> show i
-              _ -> wrapParen $ showl " " (i:as)
-            es' = case es of
-              [] -> show r
-              _  -> wrapParen $ showl " " (es ++ [r])
-          in wrapParens ["\\" , as', es']
+    Func { arg1 = i, args = as, prem = es, retn = r } ->
+      let
+        as' = case as of
+          [] -> show i
+          _ -> wrapParen $ showl " " (i:as)
+        es' = case es of
+          [] -> show r
+          _  -> wrapParen $ showl " " (es ++ [r])
+      in wrapParens ["\\" , as', es']
 
     -- redundant
     Call e1 e2 -> '(' : showl " " (e1:e2) ++ ")"
@@ -98,18 +107,24 @@ instance Show Expr where
     Arrow i as r
       -> "(-> " ++ showl " " (i : as ++ [r]) ++ ")"
 
-    Define n v -> case v of
-        Func i as es r ->
-          let func = wrapParens $ n : (map show (i:as))
-              body = case es of
-                [] -> show r
-                _  -> wrapParen $ showl " " (es ++ [r])
-          in wrapParens ["=", func, body]
-        _ -> wrapParens ["=", n, show v]
+    Define n v ->
+      let
+        exps = case v of
+          Func i as es r ->
+            let func = wrapParens $ n : (map show $ i : as)
+                body = case es of
+                  [] -> show r
+                  _  -> wrapParen $ showl " " (es ++ [r])
+            in [func, body]
+          _ -> [n, show v]
+      in wrapParens $ "=" : exps
 
-    Declare n as e -> case as of
-      [] -> "(: "  ++ showl " " (n:[e]) ++ ")"
-      _  -> "(: (" ++ showl " " (n:as)  ++ ") " ++ show e ++ ")"
+    Declare n pm as r ->
+      let rets = case as of
+            [] -> show r
+            _  -> wrapParens $ "->" : (map show $ as ++ [r])
+          prems = map show pm
+      in wrapParens $ ":" : n : prems ++ [rets]
 
     where
     showl s = intercalate s . map show
