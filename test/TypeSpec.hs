@@ -14,22 +14,25 @@ spec = do
       show TyBool `shouldBe` "Bool"
 
     it "Integer number type" $
-      show TyInt `shouldBe` "Int"
+      show TyIntn `shouldBe` "Integer"
 
     it "Rational number type" $
-      show TyRatio `shouldBe` "Ratio"
+      show TyRatn `shouldBe` "Ratio"
 
     it "Floating point number type" $
-      show TyFloat `shouldBe` "Float"
+      show TyFlon `shouldBe` "Flonum"
 
     it "Keyword type" $
-      show TyKeyword `shouldBe` "Keyword"
+      show TyKeyw `shouldBe` "Keyword"
 
     it "Charactor type" $
       show TyChar `shouldBe` "Char"
 
     it "String type" $
-      show TyString `shouldBe` "String"
+      show TyStr `shouldBe` "String"
+
+    it "String type" $
+      show TyRope `shouldBe` "Rope"
 
     it "Alpha type" $
       (show $ TyVar "a" 1) `shouldBe` "a1"
