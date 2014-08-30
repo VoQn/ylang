@@ -86,6 +86,16 @@ spec = do
     it "can parse (0/1)" $
       ratio <? showRatio case1 `shouldParse` Ratio case1
 
+  describe "keyword literal parser" $ do
+
+    it "can parse keyword : :keyword" $
+      keyword <? ":keyword" `shouldParse` Keyword "keyword"
+
+  describe "charactor literal parser" $ do
+
+    it "can parse charactor : 'c'" $
+      chr <? "'c'" `shouldParse` Char 'c'
+
   describe "string literal parser" $ do
 
     it "can parse string : \"Hello\"" $

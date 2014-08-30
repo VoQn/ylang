@@ -8,9 +8,11 @@ type Name = String
 data Expr
   -- atomic
   = Atom    Name
+  | Keyword Name
   | Int     Integer
   | Float   Double
   | Ratio   Rational
+  | Char    Char
   | String  String
   | Boolean Bool
 
@@ -58,10 +60,12 @@ currying f = case f of
   -- atomic value cannot curring
   Void      -> f
   Atom    _ -> f
+  Keyword _ -> f
   Boolean _ -> f
   Int     _ -> f
   Float   _ -> f
   Ratio   _ -> f
+  Char    _ -> f
   String  _ -> f
 
   -- collection value cannot curring
@@ -77,9 +81,11 @@ instance Show Expr where
   show expr = case expr of
     -- atomic
     Atom    s -> s
+    Keyword k -> ':' : k
     Int     n -> show n
     Float   n -> show n
     Ratio   n -> showRatio n
+    Char    c -> '\'' : c : '\'' : []
     String  s -> '"' : s ++ "\""
     Boolean b | b -> "yes" | otherwise -> "no"
 
