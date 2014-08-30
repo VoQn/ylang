@@ -1,4 +1,6 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module ParserAtomicSpec (spec) where
 
 import Data.Ratio
@@ -75,11 +77,11 @@ spec = do
     it "can parse any (show (f:Double)) string" $
       property $
         \ x -> float <? show x ~= Right (Float x)
-
+{-
     it "can parse any ylang float value" $
       property $
         \ x -> float <? show (Float x) ~= Right (Float x)
-
+-}
   describe "rational number literal parser" $ do
 
     let case1 = 0 % 1 :: Rational
