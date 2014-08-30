@@ -23,6 +23,9 @@ spec = do
     it "rational (x) == rational (x)" $
       property $ \ x -> Ratio x == Ratio x
 
+    it "charactor (c) == charactor (c)" $
+      property $ \ c -> Char c == Char c
+
   describe "ylang expression type can show own" $ do
     it "boolean (yes)" $
       show (Boolean True) `shouldBe` "yes"
@@ -42,11 +45,17 @@ spec = do
     it "rational 1/10" $
       show (Ratio (1 % 10)) `shouldBe` "1/10"
 
+    it "charactor 'c'" $
+      show (Char 'c') `shouldBe` "'c'"
+
     it "string \"\"" $
       show (String "") `shouldBe` "\"\""
 
     it "string \"message\"" $
       show (String "message") `shouldBe` "\"message\""
+
+    it "keyword :key" $
+      show (Keyword "key") `shouldBe` ":key"
 
     it "operator (&)" $
       show (Atom "&") `shouldBe` "&"
