@@ -1,25 +1,27 @@
 module Ylang.Type where
 
-type VName = String
+import Ylang.Syntax
 
 data Ty
-  = TySet
+  = TyUnit  -- ()
+  | TySet   -- 
   --
-  | TyBool
+  | TyBool  -- boolean (yes / no)
+
+  -- Numbers
+  | TyIntn  -- integer number type
+  | TyRatn  -- rational number type
+  | TyFlon  -- floating point number type
+
+  -- Letter
+  | TyKeyw  -- keyword type
+  | TyChar  -- charactor type
+  | TyStr   -- string
+  | TyRope
 
   --
-  | TyInt
-  | TyRatio
-  | TyFloat
-
-  --
-  | TyKeyword
-  | TyChar
-  | TyString
-
-  --
-  | TyFunc Ty Ty
-  | TyVar VName Int
+  | TyFunc Ty Ty -- function
+  | TyVar Name Int -- type variable
 
 instance Show Ty where
   show t = case t of
@@ -27,13 +29,14 @@ instance Show Ty where
 
     TyBool  -> "Bool"
 
-    TyInt   -> "Int"
-    TyRatio -> "Ratio"
-    TyFloat -> "Float"
+    TyIntn -> "Integer"
+    TyRatn -> "Ratio"
+    TyFlon -> "Flonum"
 
-    TyKeyword -> "Keyword"
-    TyChar    -> "Char"
-    TyString  -> "String"
+    TyKeyw -> "Keyword"
+    TyChar -> "Char"
+    TyStr　-> "String"
+    TyRope -> "Rope"
 
     TyVar v i -> v ++ show i
     TyFunc t1 t2 -> "(-> " ++ show t1 ++ " " ++ show t2 ++ ")"
