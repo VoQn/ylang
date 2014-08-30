@@ -26,6 +26,9 @@ floating = Token.float lexer
 strings :: Parser String
 strings = Token.stringLiteral lexer
 
+charLit :: Parser Char
+charLit = Token.charLiteral lexer
+
 parens :: Parser a -> Parser a
 parens = Token.parens lexer
 

@@ -9,6 +9,8 @@ module Ylang.Parser.Atomic
   , int
   , float
   , bool
+  , keyword
+  , chr
   , str
   ) where
 
@@ -21,13 +23,13 @@ import Text.Parsec
   )
 import Text.Parsec.String (Parser)
 
-import Control.Applicative ((<$>), (<*>), (<*))
+import Control.Applicative ((<$>), (<*>), (<*), (*>))
 
 import Ylang.Lexer
-  (reservedOp, integer, floating, strings)
-  
+  (reservedOp, integer, floating, strings, charLit)
+
 import Ylang.Syntax
-  (Expr(Atom, Ratio, Int, Float, Boolean, String))
+  (Expr(Atom, Ratio, Int, Float, Boolean, Keyword, Char, String))
 
 -- |
 -- Parse Variables
@@ -70,10 +72,22 @@ atom :: Parser Expr
 atom
    =  try number
   <|> try bool
+  <|> try chr
   <|> try str
   <|> try operator
+  <|> try keyword
   <|> variable
   <?> "Atomic Value"
+
+-- |
+-- Parse Keyword literal [:keyword, :test, :include-symbol ... ]
+-- >>> parse keyword "<stdin>" ":dont-look-back"
+-- Right :dont-look-back
+keyword :: Parser Expr
+keyword = Keyword <$> (istart *> ichars <* many space)
+  where
+  istart = char ':'
+  ichars = many $ alphaNum <|> symbol
 
 number :: Parser Expr
 number
@@ -131,6 +145,13 @@ bool :: Parser Expr
 bool = Boolean <$> ("yes" ?> True <|> "no" ?> False)
   where
   k ?> r = try (string k) >> return r
+
+-- |
+-- Parse Charactor literal
+-- >>> parse chr "<stdin>" "'🍣'"
+-- Right '🍣'
+chr :: Parser Expr
+chr = Char <$> charLit
 
 -- |
 -- Parse String literal
