@@ -51,17 +51,19 @@ factor
 -- >>> parse declare "<stdin>" "(: add (-> (-> Int Int) Int))"
 -- Right (: add (-> (-> Int Int) Int))
 declare :: Parser S.Expr
-declare = (L.parens $ L.reserved ":" >> (try simple <|> funcType))
+declare = (L.parens $ L.reserved ":" >> form)
   <?> "Declaration Expression"
   where
-  simple = do
-    (S.Atom n) <- (try variable <|> operator)
-    r <- targ
-    return $ S.Declare n [] [] r
-  funcType = do
-    (S.Atom n) <- (try variable <|> operator)
-    (S.Arrow t ts r)    <- arrow
-    return $ S.Declare n [] (t:ts) r
+  form = do
+    (S.Atom n) <- try variable <|> operator
+    ps         <- many $ try declare
+    (as, r)    <- cleaning <$> (try targ <|> arrow)
+    return $ S.Declare n ps as r
+  cleaning ty = case ty of
+    S.Atom        _ -> ([], ty)
+    S.Array       _ -> ([], ty)
+    S.Pair      _ _ -> ([], ty)
+    S.Arrow t ts r' -> ((t:ts), r')
 
 arrow :: Parser S.Expr
 arrow = L.parens form
@@ -140,8 +142,9 @@ closure = L.parens form
 
 targ :: Parser S.Expr
 targ
-   =  try variable
+   =  try pair
   <|> try list
+  <|> variable
   <?> "Type Expression"
 
 -- |

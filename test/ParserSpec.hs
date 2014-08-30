@@ -101,6 +101,22 @@ spec = do
       declare <? "(: zero Int)" `shouldParse`
       Declare "zero" [] [] (Atom "Int")
 
+    it "can parse pair type : (: age-name (, Int String))" $
+      declare <? "(: age-name (, Int String))" `shouldParse`
+      Declare "age-name" [] [] (Pair (Atom "Int") (Atom "String"))
+
+    it "can parse pair type : (: events [String])" $
+      declare <? "(: events [String]))" `shouldParse`
+      Declare "events" [] [] (Array [Atom "String"])
+
+    it "can parse variable type declaration : (: zero (: a Addible) a)" $
+      declare <? "(: zero (: a Addible) a)" `shouldParse`
+      Declare "zero" [Declare "a" [] [] (Atom "Addible")] [] (Atom "a")
+
     it "can parse arrow type declaration : (: f (-> a a))" $
       declare <? "(: f (-> a a))" `shouldParse`
       Declare "f" [] [Atom "a"] (Atom "a")
+
+    it "can parse comprex declaration : (: f (: t Set) (-> t t))" $
+      declare <? "(: f (: t Set) (-> t t))" `shouldParse`
+      Declare "f" [Declare "t" [] [] (Atom "Set")] [Atom "t"] (Atom "t")
