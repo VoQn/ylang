@@ -13,6 +13,7 @@ import Control.Monad.Writer
 import Ylang.Syntax
 
 type Env = Map.Map Name Expr
+
 type Eval a
   = ReaderT Env (ErrorT String
                 (WriterT [String] (StateT Env Identity))) a
@@ -25,11 +26,9 @@ getResult = fst . fst
 getEnv :: Result a b -> b
 getEnv = snd
 
--- ((Either String a, [String]), Env)
 runEval :: Env -> Eval a -> Result a Env
 runEval env evl =
-  let state = runWriterT $ runErrorT $ runReaderT evl env
-  in runIdentity $ runStateT state env
+  runIdentity (runStateT (runWriterT (runErrorT (runReaderT evl env))) env)
 
 defaultEnv :: Env
 defaultEnv = Map.empty
