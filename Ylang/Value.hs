@@ -4,7 +4,7 @@ import Ylang.Syntax
 
 data Val
   -- primitives
-  = ValBottom         -- _|_
+  = ValBotm           -- _|_
   | ValUnit           -- ()
   | ValKeyw Name      -- :keyword-value
   | ValBool Bool      -- yes / no
