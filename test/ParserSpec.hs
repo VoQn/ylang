@@ -103,7 +103,7 @@ spec = do
 
     it "can parse (\\ x (y z))" $
       closure <? "(\\ x (y z))" `shouldParse`
-      Func (Atom "x") [] [] (Factor [Atom "y", Atom "z"])
+      Func (Atom "x") [] [] (Call (Atom "y") [Atom "z"])
 
   describe "definition parser" $ do
 
@@ -117,7 +117,7 @@ spec = do
 
     it "can parse definition (has nested expression) : (= (f x) (+ x 1))" $
       define <? "(= (f x) (+ x 1))" `shouldParse`
-      Define "f" (Func (Atom "x") [] [] (Factor [Atom "+",Atom "x",Int 1]))
+      Define "f" (Func (Atom "x") [] [] (Call (Atom "+") [Atom "x",Int 1]))
 
     it "can parse lambda style definition : (= seq (\\ (x y) y))" $
       define <? "(= seq (\\ (x y) y))" `shouldParse`

@@ -21,7 +21,8 @@ type Name = String
 
 data Expr
   -- atomic
-  = Atom    Name
+  = Void
+  | Atom    Name
   | Keyword Name
   | Int     Integer
   | Float   Double
@@ -35,8 +36,7 @@ data Expr
   | Array [Expr]
 
   -- factor
-  | Void
-  | Factor [Expr]
+  | Call Expr [Expr]
 
   -- anonymous function
   | Func Expr [Expr] [Expr] Expr
@@ -49,10 +49,6 @@ data Expr
 
   -- definition
   | Define Name Expr
-
-  -- redundant
-  | Call    Expr [Expr]
-
   deriving (Eq, Ord, Show)
 
 showRatio :: Rational -> String
@@ -72,26 +68,22 @@ toTB :: String -> T.Builder
 toTB = T.fromText . T.pack
 
 mjoin :: Monoid t => t -> [t] -> t
-mjoin s es = mjoin' mempty s es
+mjoin = mjoin' mempty
 
 mjoin' :: Monoid t => [t] -> t -> [t] -> t
-mjoin' rs s es = case es of
-  []      -> mconcat rs
-  (e:es') ->
-    let
-      rs' = case rs of
-        [] -> [e]
-        _  -> rs ++ [s, e]
-    in mjoin' rs' s es'
+mjoin' rs _ []     = mconcat rs
+mjoin' [] s (e:es) = mjoin' [e] s es
+mjoin' rs s (e:es) = mjoin' (rs ++ [s, e]) s es
 
 spSep :: [Expr] -> T.Builder
 spSep = mjoin " " . map toText
 
 toText :: Expr -> T.Builder
 -- atomic expression
-toText (Boolean b)
-  | b = "yes"
-  | otherwise = "no"
+toText (Void) = "()"
+
+toText (Boolean True)  = "yes"
+toText (Boolean False) = "no"
 
 toText (Atom s)    = toTB s
 toText (Keyword k) = (T.singleton ':') <> (toTB k)
@@ -112,9 +104,6 @@ toText (Pair e1 e2) = "(, " <> spSep [e1,e2] <> ")"
 toText (Array es)   = "[" <> spSep es <> "]"
 
 -- factor
-toText (Void) = "()"
-toText (Factor as) = "(" <> spSep as <> ")"
-
 toText (Call e1 e2)   = "(" <> spSep (e1 : e2) <> ")"
 toText (Arrow i as r) = "(-> " <> spSep (i : as ++ [r]) <> ")"
 
