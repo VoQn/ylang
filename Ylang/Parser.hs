@@ -5,6 +5,7 @@ import Text.Parsec.String (Parser)
 import qualified Text.Parsec.Expr as Ex
 
 import Control.Applicative ((<$>), (*>), (<*))
+import Control.Arrow
 
 import Ylang.Lexer as L
 import qualified Ylang.Syntax as S
@@ -64,22 +65,22 @@ declare = (L.parens $ L.reserved ":" >> form)
     S.Array       _ -> ([], ty)
     S.Pair      _ _ -> ([], ty)
     S.Arrow t ts r' -> ((t:ts), r')
+    _ -> undefined
 
 arrow :: Parser S.Expr
 arrow = L.parens form
   where
   form = do
     L.reservedOp "->"
-    f <- (try arrow <|> targ)
-    s <- (try arrow <|> targ)
-    r <- many (try arrow <|> targ)
+    f <- typeExpr
+    s <- typeExpr
+    r <- many typeExpr
     return $ modify f s r
-  modify f s rs  = case rs of
-    []  -> S.Arrow f [] s
-    [r] -> S.Arrow f [s] r
-    _   ->
-      let (r':rs') = reverse rs
-      in S.Arrow f (s:rs') r'
+  typeExpr = try arrow <|> targ
+  modify f s [] = S.Arrow f [] s
+  modify f s rs =
+    let (r',rs') = (last &&& init) rs
+    in S.Arrow f (s:rs') r'
 
 -- |
 -- Parse Definition Syntax
@@ -94,29 +95,31 @@ arrow = L.parens form
 -- >>> parse define "<stdin>" "(= (f x y) (+ x y))"
 -- Right (Define {name = "f", retn = Func {arg1 = Atom "x", args = [Atom "y"], prem = [], retn = Factor [Atom "+",Atom "x",Atom "y"]}})
 define :: Parser S.Expr
-define
-   = L.parens form
+define = L.parens form
   <?> "Definition Expression"
   where
   form = do
     L.reservedOp "="
     (v,e) <- lambdaExpr <|> exampleExpr
     return $ S.Define (getName v) e
-  lambdaExpr = do
-    i <- (try variable <|> operator)
-    f <- (try closure <|> expr)
-    return (i, f)
-  exampleExpr = do
-    (f:a:as) <- L.parens $ many targ
-    (r:es)   <- bodyExpr <$> many expr
-    return (f, S.Func a as es r)
-  bodyExpr exps = case exps of
-    [] -> []
-    _ ->
-      let (r:rs) = reverse exps in r : reverse rs
-  getName v = case v of
-    S.Atom n -> n
-    _ -> undefined
+  getName (S.Atom n) = n
+  getName _ = undefined
+
+lambdaExpr :: Parser (S.Expr, S.Expr)
+lambdaExpr = do
+  i <- (try variable <|> operator)
+  f <- (try closure <|> expr)
+  return (i, f)
+
+exampleExpr :: Parser (S.Expr, S.Expr)
+exampleExpr = do
+  (f:a:as) <- L.parens $ many targ
+  (es,r)   <- pop <$> many expr
+  return (f, S.Func a as es r)
+
+pop :: [a] -> ([a], a)
+pop [] = undefined
+pop xs = (init &&& last) xs
 
 -- |
 -- Parse Closure Syntax
@@ -130,15 +133,11 @@ closure = L.parens form
   where
   form = do
     L.reservedOp "\\"
-    (a:as) <- argsExpr
-    (r:es) <- bodyExpr <$> many expr
+    (a:as) <- try manyArgs <|> unitArg
+    (es,r) <- pop <$> many expr
     return $ S.Func a as es r
-  argsExpr = (try $ L.parens $ many targ) <|> ((:[]) <$> targ)
-  bodyExpr exps = case exps of
-    []  -> []
-    _  ->
-      let (r:rs) = reverse exps in r : reverse rs
-
+  manyArgs = L.parens $ many targ
+  unitArg  = (:[]) <$> targ
 
 targ :: Parser S.Expr
 targ
@@ -160,12 +159,11 @@ call = L.parens form
   <?> "({CALL_FUNCTION} [{ARGS}])"
   where
   form = do
-    f <- caller
+    func <- caller
     args <- many expr
-    return $ modify f args
-  modify f as = case as of
-    [] -> f
-    _  -> S.Factor (f:as)
+    return $ modify func args
+  modify f [] = f
+  modify f as = S.Factor (f:as)
 
 caller :: Parser S.Expr
 caller
@@ -183,8 +181,7 @@ collection
 -- |
 -- Parse pair literal [(, 1 2), (, yes 2), (, x no), ...]
 pair :: Parser S.Expr
-pair
-   =  L.parens form
+pair = L.parens form
   <?> "Pair Expression : (, {EXPR} {EXPR})"
   where
   form = do
@@ -194,12 +191,12 @@ pair
   modify rs ts = case ts of
     []     -> S.Atom ","
     [S.Array []] -> case rs of
-      []   -> S.Factor [S.Atom "->",S.Atom "x",S.Pair (S.Array []) $ S.Atom "x"]
+      []   -> S.Func (S.Atom "x") [] [] (S.Pair (S.Array []) (S.Atom "x"))
       [S.Array []] -> S.Array []
       [s]  -> S.Array [s]
       _    -> S.Array $ reverse rs
     (l:[]) -> case rs of
-      []  -> S.Factor [S.Atom "->",S.Atom "x",S.Pair l $ S.Atom "x"]
+      []  -> S.Func (S.Atom "x") [] [] (S.Pair l (S.Atom "x"))
       [s] -> S.Pair s l
       _   -> S.Pair (S.Array $ reverse rs) l
     (x:xs) -> modify (x:rs) xs

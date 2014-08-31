@@ -47,15 +47,10 @@ eval expr = case expr of
     r1 <- eval e1
     r2 <- eval e2
     return $ Pair r1 r2
-{-
-  Array es ->
-    let
-      rs = do
-        e <- es
-        r <- return $ eval env e
-        return $ r
-    in return $ Array rs
--}
+
+  Array es -> do
+    rs <- mapM eval es
+    return $ Array rs
 
   Atom n -> do
     tell [n]
