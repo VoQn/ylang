@@ -36,7 +36,7 @@ spec = do
     it "assign (= x 10)" $ do
       let defv = Define "x" (Int 10)
       let exec = runEval defaultEnv $ eval defv
-      getResult exec `shouldBe` Right (Atom "x")
+      getResult exec `shouldBe` Right defv
 
     it "assigned value vall (= x 10) (x)" $ do
       let defv = Define "x" (Int 10)

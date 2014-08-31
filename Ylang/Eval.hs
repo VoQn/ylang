@@ -1,8 +1,13 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Ylang.Eval where
 
 import Data.List (intercalate)
 import Data.Map (Map)
 import qualified Data.Map as Map
+
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Builder as TB (toLazyText)
 
 import Control.Monad.Identity
 import Control.Monad.Error
@@ -10,7 +15,8 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
 
-import Ylang.Syntax
+import qualified Ylang.Syntax as Y (toText)
+import Ylang.Syntax hiding (toText)
 
 type Env = Map.Map Name Expr
 
@@ -33,50 +39,65 @@ runEval env evl =
 defaultEnv :: Env
 defaultEnv = Map.empty
 
+defPref :: String
+defPref = "def_"
+
+decPref :: String
+decPref = "dec_"
+
+textToString = TL.unpack . TB.toLazyText . Y.toText
+
 eval :: Expr -> Eval Expr
-eval expr = case expr of
   -- atomic
-  Boolean _ -> return expr
-  Int     _ -> return expr
-  Float   _ -> return expr
-  Ratio   _ -> return expr
-  String  _ -> return expr
+eval v@(Void)      = return v
+eval k@(Keyword _) = return k
+eval b@(Boolean _) = return b
+eval i@(Int _)     = return i
+eval f@(Float _)   = return f
+eval r@(Ratio _)   = return r
+eval s@(String _)  = return s
 
   -- collection
-  Pair e1 e2 -> do
-    r1 <- eval e1
-    r2 <- eval e2
-    return $ Pair r1 r2
+eval (Pair e1 e2) = do
+  r1 <- eval e1
+  r2 <- eval e2
+  return $ Pair r1 r2
 
-  Array es -> do
-    rs <- mapM eval es
-    return $ Array rs
+eval (Array es) =
+  mapM eval es >>= return . Array
 
-  Atom n -> do
-    tell [n]
-    env <- get
-    case Map.lookup n env of
-      Just x -> return x
-      Nothing ->
-        throwError ("<Undefined Value> : " ++ n)
-
-  f@(Func _ _ _ _) -> return expr
-
-  -- factor
-  Define n v -> tryAssign n v
-
-  -- identity
-  Call e [] -> return e
-
-  -- applycation
-  Call f args -> undefined
-
-  _ -> return expr
-
-tryAssign :: Name -> Expr -> Eval Expr
-tryAssign n v = do
+eval (Atom n) = do
+  tell [n]
   env <- get
-  case Map.lookup n env of
+  let key = defPref ++ n
+  case Map.lookup key env of
+    Just x -> return x
+    Nothing ->
+      throwError ("<Undefined Value> : " ++ n)
+
+eval f@(Func _ _ _ _) = return f
+
+eval d@(Declare n pm as r) = do
+  env <- get
+  let key = decPref
+  case Map.lookup key env of
+    Just (Declare n q b l) ->
+      let messages = [
+              "<Conflict Definition>",
+              "Already Defined ::",
+              textToString (Declare n q b l),
+              "But Reassigned ::",
+              textToString (Declare n pm as r)
+            ]
+      in throwError $ intercalate " " messages
+    Nothing -> do
+      put $ Map.insert key d env
+      return $ d
+
+eval d@(Define n v) = do
+  env <- get
+  let key = defPref ++ n
+  case Map.lookup key env of
 
     -- already assigned
     Just x ->
@@ -84,29 +105,22 @@ tryAssign n v = do
         messages = [
             "<Conflict Definition>",
             "Already Defined ::",
-            show (Define n x),
+            textToString (Define n x),
             "But Reassigned ::",
-            show (Define n v)
+            textToString (Define n v)
           ]
         message = intercalate " " messages
       in throwError message
 
-    -- can assign
+  -- can assign
     Nothing -> do
       v' <- eval v
-      put $ Map.insert n v' env
-      return $ Atom n
+      put $ Map.insert key v' env
+      return $ (Define n v)
 
-declaration :: Env -> [Expr] -> (Env, Expr)
-declaration = undefined
+  -- identity
+eval (Call e []) = return e
 
--- anonymous :: Env -> Expr -> [Expr] -> (Env, Expr)
-anonymous e vs es r as
-  | length vs == length as = -- apply and return
-      undefined
-
-  | length vs > length as = -- partial apply
-      undefined
-
-  | otherwise = -- arity over
-      undefined
+  -- applycation
+eval (Call (Atom x) args) = case x of
+  "+" -> undefined
