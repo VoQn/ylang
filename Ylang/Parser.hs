@@ -64,6 +64,7 @@ declare = (L.parens $ L.reserved ":" >> form)
     S.Atom        _ -> ([], ty)
     S.Array       _ -> ([], ty)
     S.Pair      _ _ -> ([], ty)
+    S.Call      _ _ -> ([], ty)
     S.Arrow t ts r' -> ((t:ts), r')
     _ -> undefined
 
@@ -89,11 +90,11 @@ arrow = L.parens form
 -- >>> parse define "<stdin>" "(= seq (\\ (x y) y))"
 -- Right (Define "seq" (Func (Atom "x") [Atom "y"] [] (Atom "y")))
 -- >>> parse define "<stdin>" "(= add (\\ (x y) (+ x y)))"
--- Right (Define "add" (Func (Atom "x") [Atom "y"] [] (Factor [Atom "+",Atom "x",Atom "y"])))
+-- Right (Define "add" (Func (Atom "x") [Atom "y"] [] (Call (Atom "+") [Atom "x",Atom "y"])))
 -- >>> parse define "<stdin>" "(= (f x y) y)"
 -- Right (Define "f" (Func (Atom "x") [Atom "y"] [] (Atom "y")))
 -- >>> parse define "<stdin>" "(= (f x y) (+ x y))"
--- Right (Define "f" (Func (Atom "x") [Atom "y"] [] (Factor [Atom "+",Atom "x",Atom "y"])))
+-- Right (Define "f" (Func (Atom "x") [Atom "y"] [] (Call (Atom "+") [Atom "x",Atom "y"])))
 define :: Parser S.Expr
 define = L.parens form
   <?> "Definition Expression"
@@ -151,9 +152,9 @@ targ
 -- >>> parse call "<stdin>" "(+)"
 -- Right (Atom "+")
 -- >>> parse call "<stdin>" "(+ 1 2 3)"
--- Right (Factor [Atom "+",Int 1,Int 2,Int 3])
+-- Right (Call (Atom "+") [Int 1,Int 2,Int 3])
 -- >>> parse call "<stdin>" "(+ x y z)"
--- Right (Factor [Atom "+",Atom "x",Atom "y",Atom "z"])
+-- Right (Call (Atom "+") [Atom "x",Atom "y",Atom "z"])
 call :: Parser S.Expr
 call = L.parens form
   <?> "({CALL_FUNCTION} [{ARGS}])"
@@ -163,7 +164,7 @@ call = L.parens form
     args <- many expr
     return $ modify func args
   modify f [] = f
-  modify f as = S.Factor (f:as)
+  modify f as = S.Call f as
 
 caller :: Parser S.Expr
 caller
@@ -210,6 +211,6 @@ pair = L.parens form
 -- >>> parse list "<stdin>" "[x y z]"
 -- Right (Array [Atom "x",Atom "y",Atom "z"])
 -- >>> parse list "<stdin>" "[xyz (seq y)]"
--- Right (Array [Atom "xyz",Factor [Atom "seq",Atom "y"]])
+-- Right (Array [Atom "xyz",Call (Atom "seq") [Atom "y"]])
 list :: Parser S.Expr
 list = brackets $ S.Array <$> many expr

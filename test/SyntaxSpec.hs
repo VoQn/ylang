@@ -78,19 +78,20 @@ spec = do
       toText Void `shouldBe` "()"
 
     it "func (\\ x x)" $
-      toText (Func (Atom "x") [] [] (Atom "x")) `shouldBe` "(\\ x x)"
+      toText (Func (Atom "x") [] [] (Atom "x")) `shouldBe`
+      "(\\ x x)"
 
     it "func (\\ (x y) y)" $
       toText (Func (Atom "x") [Atom "y"] [] (Atom "y")) `shouldBe`
       "(\\ (x y) y)"
 
     it "func (\\ (x y) (= z (+ x y)) z)" $ do
-      let g = Define "z" $ Call (Atom "+") [Atom "x",Atom "y"]
-      let f = Func (Atom "x") [Atom "y"] [g] $ Atom "z"
-      toText f `shouldBe` "(\\ (x y) (= z (+ x y)) z)"
+      let g   = Define "z" $ Call (Atom "+") [Atom "x",Atom "y"]
+      let f r = Func (Atom "x") [Atom "y"] [r] $ Atom "z"
+      toText (f g) `shouldBe` "(\\ (x y) (= z (+ x y)) z)"
 
     it "apply (f x y)" $
-      toText (Factor [Atom "f",Atom "x",Atom "y"]) `shouldBe`
+      toText (Call (Atom "f") [Atom "x",Atom "y"]) `shouldBe`
       "(f x y)"
 
     it "arrow (-> A B)" $
@@ -102,7 +103,7 @@ spec = do
       "(-> A B C)"
 
     it "arrow (-> (A B) C)" $
-      toText (Arrow (Factor [Atom "A",Atom "B"]) [] (Atom "C")) `shouldBe`
+      toText (Arrow (Call (Atom "A") [Atom "B"]) [] (Atom "C")) `shouldBe`
       "(-> (A B) C)"
 
     it "define (= x 10)" $

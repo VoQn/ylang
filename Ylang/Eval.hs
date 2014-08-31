@@ -65,14 +65,11 @@ eval expr = case expr of
   -- factor
   Define n v -> tryAssign n v
 
-  -- void
-  Factor []     -> return expr
-
   -- identity
-  Factor (e:[]) -> return e
+  Call e [] -> return e
 
   -- applycation
-  Factor (f:args) -> undefined
+  Call f args -> undefined
 
   _ -> return expr
 
