@@ -192,7 +192,7 @@ pair = L.parens form
     []     -> S.Atom ","
     [S.Array []] -> case rs of
       []   -> S.Func (S.Atom "x") [] [] (S.Pair (S.Array []) (S.Atom "x"))
-      [S.Array []] -> S.Array []
+      [S.Array []] -> S.Array [S.Array []]
       [s]  -> S.Array [s]
       _    -> S.Array $ reverse rs
     (l:[]) -> case rs of
