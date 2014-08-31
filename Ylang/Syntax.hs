@@ -1,6 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Ylang.Syntax where
+module Ylang.Syntax
+ (
+  Name,
+  Expr(..),
+  showRatio,
+  currying,
+  toText
+ ) where
 
 import qualified Data.Text as T hiding (singleton)
 import qualified Data.Text.Lazy.Builder as T
@@ -32,27 +39,17 @@ data Expr
   | Factor [Expr]
 
   -- anonymous function
-  | Func {
-      arg1 :: Expr,
-      args :: [Expr],
-      prem :: [Expr],
-      retn :: Expr
-    }
+  | Func Expr [Expr] [Expr] Expr
 
+  -- function type
   | Arrow Expr [Expr] Expr
 
   -- declaration
-  | Declare {
-      name :: Name,
-      prem :: [Expr],
-      argT :: [Expr],
-      retT :: Expr
-    }
+  | Declare Name [Expr] [Expr] Expr
+
   -- definition
-  | Define {
-      name :: Name,
-      retn :: Expr
-    }
+  | Define Name Expr
+
   -- redundant
   | Call    Expr [Expr]
 
@@ -87,65 +84,65 @@ mjoin' rs s es = case es of
         _  -> rs ++ [s, e]
     in mjoin' rs' s es'
 
+spSep :: [Expr] -> T.Builder
+spSep = mjoin " " . map toText
 
 toText :: Expr -> T.Builder
-toText expr = case expr of
-  -- atomic expression
-  Atom    s -> toTB s
-  Keyword k -> (T.singleton ':') <> (toTB k)
-  Int     n -> toTB $ show n
-  Float   n -> toTB $ show n
-  Ratio   v ->
-    let n = numerator v
-        d = denominator v
-        c = toTB . show
-    in (c n) <> "/" <> (c d)
-  Char    c -> mconcat $ map T.singleton ['\'', c, '\'']
-  String  s -> "\"" <> toTB s <> "\""
-  Boolean b | b -> "yes" | otherwise -> "no"
+-- atomic expression
+toText (Boolean b)
+  | b = "yes"
+  | otherwise = "no"
 
-  -- collection expression
-  Pair e1 e2 -> "(, " <> (spSep [e1,e2]) <> ")"
-  Array es   -> "[" <> (spSep es) <> "]"
+toText (Atom s)    = toTB s
+toText (Keyword k) = (T.singleton ':') <> (toTB k)
 
-  -- factor
-  Void -> "()"
-  Factor as -> "(" <> (spSep as) <> ")"
+toText (Int n)     = toTB $ show n
+toText (Float n)   = toTB $ show n
+toText (Ratio v) =
+  let n = numerator v
+      d = denominator v
+      c = toTB . show
+  in (c n) <> "/" <> (c d)
 
-  Func i as es r ->
-    let
-      as' = case as of
-        [] -> toText i
-        _ -> "(" <> (spSep (i:as)) <> ")"
-      es' = case es of
-        [] -> toText r
-        _  -> "(" <> (spSep (es ++ [r])) <> ")"
-    in "(" <> (mjoin " " ["\\", as', es']) <> ")"
+toText (Char c)   = mconcat $ map T.singleton ['\'', c, '\'']
+toText (String s) = "\"" <> toTB s <> "\""
 
-  Call e1 e2 -> "(" <> (spSep (e1:e2)) <> ")"
+-- collection expression
+toText (Pair e1 e2) = "(, " <> spSep [e1,e2] <> ")"
+toText (Array es)   = "[" <> spSep es <> "]"
 
-  Arrow i as r
-    -> "(-> " <> (spSep (i : as ++ [r])) <> ")"
+-- factor
+toText (Void) = "()"
+toText (Factor as) = "(" <> spSep as <> ")"
 
-  Define n v ->
-    let
-      exps = case v of
-        Func i as es r ->
-          let
-            args' = spSep $ i : as
-            func = "(" <> (toTB n) <> " " <> args' <> ")"
-            body = case es of
-              [] -> toText r
-              _  -> "(" <> (spSep (es ++ [r])) <> ")"
-          in [func, body]
-        _ -> [toTB n, toText v]
-    in "(= " <> (mjoin " " exps) <> ")"
+toText (Call e1 e2)   = "(" <> spSep (e1 : e2) <> ")"
+toText (Arrow i as r) = "(-> " <> spSep (i : as ++ [r]) <> ")"
 
-  Declare n pm as r ->
-    let rets = case as of
-          [] -> toText r
-          _  -> "(-> " <> (spSep $ as ++ [r]) <> ")"
-        prems = map toText pm
-    in "(: " <> (mjoin " " ((toTB n) : prems ++ [rets])) <> ")"
+toText (Func i as es r) = "(" <> mjoin " " ["\\", as', es'] <> ")"
   where
-  spSep = mjoin " " . map toText
+  as' = case as of
+    [] -> toText i
+    _ -> "(" <> spSep (i : as) <> ")"
+  es' = case es of
+    [] -> toText r
+    _  -> spSep (es ++ [r])
+
+toText (Define n v) = "(= " <> mjoin " " exps <> ")"
+  where
+  exps = case v of
+    Func i as es r -> [func, body]
+      where
+        args' = spSep $ i : as
+        func = "(" <> (toTB n) <> " " <> args' <> ")"
+        body = case es of
+          []  -> toText r
+          _   -> spSep (es ++ [r])
+    _ -> [toTB n, toText v]
+
+toText (Declare n pm as r) = "(: " <> mjoin " " (n' : pr ++ [rt]) <> ")"
+  where
+  n' = toTB n
+  rt = case as of
+    [] -> toText r
+    _  -> "(-> " <> spSep (as ++ [r]) <> ")"
+  pr = map toText pm

@@ -25,9 +25,37 @@ spec :: Spec
 spec = do
   describe "pair parser" $ do
 
+    it "can parse as `cons operator`" $
+      pair <? "(,)" `shouldParse`
+      Atom ","
+
+    it "can parse as partial applied function (, 1)" $
+      pair <? "(, 1)" `shouldParse`
+      Func (Atom "x") [] [] (Pair (Int 1) (Atom "x"))
+
+    it "can parse as partial applied function (, [])" $
+      pair <? "(, [])" `shouldParse`
+      Func (Atom "x") [] [] (Pair (Array []) (Atom "x"))
+
     it "can parse pair (, yes no)" $
       pair <? "(, yes no)" `shouldParse`
       Pair (Boolean True) (Boolean False)
+
+    it "can parse nested list expression (, [] [])" $
+      pair <? "(, [] [])" `shouldParse`
+      Array [Array []]
+
+    it "can parse primitve list (, 1 [])" $
+      pair <? "(, 1 [])" `shouldParse`
+      Array [Int 1]
+
+    it "can parse another list expression (, 1 2 3 4 5 [])" $
+      pair <? "(, 1 2 3 4 5 [])" `shouldParse`
+      Array [Int 1,Int 2,Int 3,Int 4,Int 5]
+
+    it "can parse dotted list expression (, 1 2 3 4 5 6)" $
+      pair <? "(, 1 2 3 4 5 6)" `shouldParse`
+      Pair (Array [Int 1,Int 2,Int 3,Int 4,Int 5]) (Int 6)
 
   describe "collection parser" $ do
 
