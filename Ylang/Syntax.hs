@@ -39,27 +39,17 @@ data Expr
   | Factor [Expr]
 
   -- anonymous function
-  | Func {
-      arg1 :: Expr,
-      args :: [Expr],
-      prem :: [Expr],
-      retn :: Expr
-    }
+  | Func Expr [Expr] [Expr] Expr
 
+  -- function type
   | Arrow Expr [Expr] Expr
 
   -- declaration
-  | Declare {
-      name :: Name,
-      prem :: [Expr],
-      argT :: [Expr],
-      retT :: Expr
-    }
+  | Declare Name [Expr] [Expr] Expr
+
   -- definition
-  | Define {
-      name :: Name,
-      retn :: Expr
-    }
+  | Define Name Expr
+
   -- redundant
   | Call    Expr [Expr]
 

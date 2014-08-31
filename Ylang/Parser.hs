@@ -46,11 +46,11 @@ factor
 
 -- |
 -- >>> parse declare "<stdin>" "(: x Int)"
--- Right (Declare {name = "x", prem = [], argT = [], retT = Atom "Int"})
+-- Right (Declare "x" [] [] (Atom "Int"))
 -- >>> parse declare "<stdin>" "(: add (-> Int Int Int))"
--- Right (Declare {name = "add", prem = [], argT = [Atom "Int",Atom "Int"], retT = Atom "Int"})
+-- Right (Declare "add" [] [Atom "Int",Atom "Int"] (Atom "Int"))
 -- >>> parse declare "<stdin>" "(: add (-> (-> Int Int) Int))"
--- Right (Declare {name = "add", prem = [], argT = [Arrow (Atom "Int") [] (Atom "Int")], retT = Atom "Int"})
+-- Right (Declare "add" [] [Arrow (Atom "Int") [] (Atom "Int")] (Atom "Int"))
 declare :: Parser S.Expr
 declare = (L.parens $ L.reserved ":" >> form)
   <?> "Declaration Expression"
@@ -85,15 +85,15 @@ arrow = L.parens form
 -- |
 -- Parse Definition Syntax
 -- >>> parse define "<stdin>" "(= x 10)"
--- Right (Define {name = "x", retn = Int 10})
+-- Right (Define "x" (Int 10))
 -- >>> parse define "<stdin>" "(= seq (\\ (x y) y))"
--- Right (Define {name = "seq", retn = Func {arg1 = Atom "x", args = [Atom "y"], prem = [], retn = Atom "y"}})
+-- Right (Define "seq" (Func (Atom "x") [Atom "y"] [] (Atom "y")))
 -- >>> parse define "<stdin>" "(= add (\\ (x y) (+ x y)))"
--- Right (Define {name = "add", retn = Func {arg1 = Atom "x", args = [Atom "y"], prem = [], retn = Factor [Atom "+",Atom "x",Atom "y"]}})
+-- Right (Define "add" (Func (Atom "x") [Atom "y"] [] (Factor [Atom "+",Atom "x",Atom "y"])))
 -- >>> parse define "<stdin>" "(= (f x y) y)"
--- Right (Define {name = "f", retn = Func {arg1 = Atom "x", args = [Atom "y"], prem = [], retn = Atom "y"}})
+-- Right (Define "f" (Func (Atom "x") [Atom "y"] [] (Atom "y")))
 -- >>> parse define "<stdin>" "(= (f x y) (+ x y))"
--- Right (Define {name = "f", retn = Func {arg1 = Atom "x", args = [Atom "y"], prem = [], retn = Factor [Atom "+",Atom "x",Atom "y"]}})
+-- Right (Define "f" (Func (Atom "x") [Atom "y"] [] (Factor [Atom "+",Atom "x",Atom "y"])))
 define :: Parser S.Expr
 define = L.parens form
   <?> "Definition Expression"
@@ -124,9 +124,9 @@ pop xs = (init &&& last) xs
 -- |
 -- Parse Closure Syntax
 -- >>> parse closure "<stdin>" "(\\ (x) x)"
--- Right (Func {arg1 = Atom "x", args = [], prem = [], retn = Atom "x"})
+-- Right (Func (Atom "x") [] [] (Atom "x"))
 -- >>> parse closure "<stdin>" "(\\ (x) [x])"
--- Right (Func {arg1 = Atom "x", args = [], prem = [], retn = Array [Atom "x"]})
+-- Right (Func (Atom "x") [] [] (Array [Atom "x"]))
 closure :: Parser S.Expr
 closure = L.parens form
   <?> "(-> ({ARGS}) {BODY})"
