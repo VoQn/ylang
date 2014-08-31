@@ -68,12 +68,12 @@ toTB :: String -> T.Builder
 toTB = T.fromText . T.pack
 
 mjoin :: Monoid t => t -> [t] -> t
-mjoin s es = mjoin' mempty s es
+mjoin = mjoin' mempty
 
 mjoin' :: Monoid t => [t] -> t -> [t] -> t
 mjoin' rs _ []     = mconcat rs
-mjoin' [] _ (e:es) = mjoin' [e] s es
-mjoin' rs s (e:es) = mjoin' (rs ++ [s, e]) es
+mjoin' [] s (e:es) = mjoin' [e] s es
+mjoin' rs s (e:es) = mjoin' (rs ++ [s, e]) s es
 
 spSep :: [Expr] -> T.Builder
 spSep = mjoin " " . map toText
