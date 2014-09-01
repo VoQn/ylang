@@ -1,12 +1,14 @@
 {-# LANGUAGE OverloadedStrings, TypeSynonymInstances, FlexibleInstances #-}
 module Ylang.Display where
 
--- import qualified Data.Text.Lazy as L
+import qualified Data.Text.Lazy as L
 import qualified Data.Text.Lazy.Builder as LB
 import Data.Monoid
 
 class Display a where
   textBuild :: a -> LB.Builder
+  toString :: a -> String
+  toString = L.unpack . LB.toLazyText . textBuild
 
 instance Display Char where
   textBuild = LB.singleton
