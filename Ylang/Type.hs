@@ -4,7 +4,7 @@ import Ylang.Syntax
 
 data Ty
   = TyUnit  -- ()
-  | TySet   -- 
+  | TySet   --
   --
   | TyBool  -- boolean (yes / no)
 
@@ -25,9 +25,9 @@ data Ty
 
 instance Show Ty where
   show t = case t of
-    TySet   -> "Set"
+    TySet  -> "Set"
 
-    TyBool  -> "Bool"
+    TyBool -> "Bool"
 
     TyIntn -> "Integer"
     TyRatn -> "Ratio"

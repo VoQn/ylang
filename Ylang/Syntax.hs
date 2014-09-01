@@ -17,6 +17,8 @@ import Data.Monoid
 import Data.Ratio (numerator, denominator)
 import Data.List (intercalate)
 
+import Ylang.Display
+
 type Name = String
 
 data Expr
@@ -86,7 +88,7 @@ toText (Boolean True)  = "yes"
 toText (Boolean False) = "no"
 
 toText (Atom s)    = toTB s
-toText (Keyword k) = (T.singleton ':') <> (toTB k)
+toText (Keyword k) = ":" <> (toTB k)
 
 toText (Int n)     = toTB $ show n
 toText (Float n)   = toTB $ show n
@@ -96,42 +98,42 @@ toText (Ratio v) =
       c = toTB . show
   in (c n) <> "/" <> (c d)
 
-toText (Char c)   = mconcat $ map T.singleton ['\'', c, '\'']
-toText (String s) = "\"" <> toTB s <> "\""
+toText (Char c)   = chrLit c
+toText (String s) = strLit s
 
 -- collection expression
-toText (Pair e1 e2) = "(, " <> spSep [e1,e2] <> ")"
-toText (Array es)   = "[" <> spSep es <> "]"
+toText (Pair e1 e2) = parens $ ", " <> spSep [e1,e2]
+toText (Array es)   = brackets $ spSep es
 
 -- factor
-toText (Call e1 e2)   = "(" <> spSep (e1 : e2) <> ")"
-toText (Arrow i as r) = "(-> " <> spSep (i : as ++ [r]) <> ")"
+toText (Call e1 e2)   = parens $ spSep (e1 : e2)
+toText (Arrow i as r) = parens $ "-> " <> spSep (i : as ++ [r])
 
-toText (Func i as es r) = "(" <> mjoin " " ["\\", as', es'] <> ")"
+toText (Func i as es r) = parens $ mjoin " " ["\\", as', es']
   where
   as' = case as of
     [] -> toText i
-    _ -> "(" <> spSep (i : as) <> ")"
+    _  -> parens $ spSep (i : as)
   es' = case es of
     [] -> toText r
     _  -> spSep (es ++ [r])
 
-toText (Define n v) = "(= " <> mjoin " " exps <> ")"
+toText (Define n v) = parens $ "= " <> mjoin " " exps
   where
   exps = case v of
     Func i as es r -> [func, body]
       where
         args' = spSep $ i : as
-        func = "(" <> (toTB n) <> " " <> args' <> ")"
+        func = parens $ (toTB n) <> " " <> args'
         body = case es of
           []  -> toText r
           _   -> spSep (es ++ [r])
     _ -> [toTB n, toText v]
 
-toText (Declare n pm as r) = "(: " <> mjoin " " (n' : pr ++ [rt]) <> ")"
+toText (Declare n pm as r) = parens $ ": " <> mjoin " " (n' : pr ++ [rt])
   where
   n' = toTB n
   rt = case as of
     [] -> toText r
-    _  -> "(-> " <> spSep (as ++ [r]) <> ")"
+    _  -> parens $ "-> " <> spSep (as ++ [r])
   pr = map toText pm

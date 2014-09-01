@@ -1,12 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Ylang.Eval where
 
 import Data.List (intercalate)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy as TL (unpack)
 import qualified Data.Text.Lazy.Builder as TB (toLazyText)
 
 import Control.Monad.Identity
@@ -17,6 +15,8 @@ import Control.Monad.Writer
 
 import qualified Ylang.Syntax as Y (toText)
 import Ylang.Syntax hiding (toText)
+
+textToString = TL.unpack . TB.toLazyText . Y.toText
 
 type Env = Map.Map Name Expr
 
@@ -44,8 +44,6 @@ defPref = "def_"
 
 decPref :: String
 decPref = "dec_"
-
-textToString = TL.unpack . TB.toLazyText . Y.toText
 
 eval :: Expr -> Eval Expr
   -- atomic
@@ -121,6 +119,4 @@ eval d@(Define n v) = do
   -- identity
 eval (Call e []) = return e
 
-  -- applycation
-eval (Call (Atom x) args) = case x of
-  "+" -> undefined
+eval _ = undefined
