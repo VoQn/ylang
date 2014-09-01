@@ -20,6 +20,17 @@ instance Display Integer where
 instance Display Double where
   textBuild = LB.fromString . show
 
+instance Display LB.Builder where
+  textBuild = id
+
+mjoin :: Monoid t => t -> [t] -> t
+mjoin _ [] = mempty
+mjoin _ (x:[]) = x
+mjoin s (x:xs) = x <> s <> mjoin s xs
+
+spaceSep :: Display d => [d] -> LB.Builder
+spaceSep = mjoin " " . map textBuild
+
 close :: Char -> LB.Builder -> Char -> LB.Builder
 close o b c = textBuild o <> b <> textBuild c
 

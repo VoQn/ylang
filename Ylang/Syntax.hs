@@ -66,17 +66,6 @@ currying f = case f of
 
   _ -> f
 
-mjoin :: Monoid t => t -> [t] -> t
-mjoin = mjoin' mempty
-
-mjoin' :: Monoid t => [t] -> t -> [t] -> t
-mjoin' rs _ []     = mconcat rs
-mjoin' [] s (e:es) = mjoin' [e] s es
-mjoin' rs s (e:es) = mjoin' (rs ++ [s, e]) s es
-
-spSep :: [Expr] -> T.Builder
-spSep = mjoin " " . map textBuild
-
 instance Display Expr where
   textBuild = toText
 
@@ -101,38 +90,38 @@ toText (Char c)   = chrLit c
 toText (String s) = strLit s
 
 -- collection expression
-toText (Pair e1 e2) = parens $ ", " <> spSep [e1,e2]
-toText (Array es)   = brackets $ spSep es
+toText (Pair e1 e2) = parens $ ", " <> spaceSep [e1, e2]
+toText (Array es)   = brackets $ spaceSep es
 
 -- factor
-toText (Call e1 e2)   = parens $ spSep (e1 : e2)
-toText (Arrow i as r) = parens $ "-> " <> spSep (i : as ++ [r])
+toText (Call e1 e2)   = parens $ spaceSep $ e1 : e2
+toText (Arrow i as r) = parens $ "-> " <> spaceSep ((i : as) ++ [r])
 
-toText (Func i as es r) = parens $ mjoin " " ["\\", as', es']
+toText (Func i as es r) = parens $ spaceSep ["\\", as', es']
   where
   as' = case as of
     [] -> textBuild i
-    _  -> parens $ spSep (i : as)
+    _  -> parens $ spaceSep (i : as)
   es' = case es of
     [] -> textBuild r
-    _  -> spSep (es ++ [r])
+    _  -> spaceSep (es ++ [r])
 
-toText (Define n v) = parens $ "= " <> mjoin " " exps
+toText (Define n v) = parens $ "= " <> spaceSep exps
   where
   exps = case v of
     Func i as es r -> [func, body]
       where
-        arg' = spSep $ i : as
+        arg' = spaceSep $ i : as
         func = parens $ textBuild n <> " " <> arg'
         body = case es of
           []  -> textBuild r
-          _   -> spSep (es ++ [r])
+          _   -> spaceSep (es ++ [r])
     _ -> [textBuild n, textBuild v]
 
-toText (Declare n pm as r) = parens $ ": " <> mjoin " " (n' : pr ++ [rt])
+toText (Declare n pm as r) = parens $ ": " <> spaceSep (n' : pr ++ [rt])
   where
   n' = textBuild n
   rt = case as of
     [] -> textBuild r
-    _  -> parens $ "-> " <> spSep (as ++ [r])
+    _  -> parens $ "-> " <> spaceSep (as ++ [r])
   pr = map textBuild pm
