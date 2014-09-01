@@ -57,7 +57,7 @@ currying f = case f of
   _ -> f
 
 instance Display Expr where
-  textBuild = toText
+  textBuild e = toText e
 
 toText :: Expr -> Builder
 -- atomic expression
@@ -68,16 +68,15 @@ toText (Boolean False) = "no"
 
 toText (Atom s)    = textBuild s
 toText (Keyword k) = ":" <> textBuild k
-
-toText (Int n)     = textBuild n
-toText (Float n)   = textBuild n
-toText (Ratio v) =
-  let n = textBuild $ numerator v
-      d = textBuild $ denominator v
-  in n <> "/" <> d
-
 toText (Char c)   = chrLit c
 toText (String s) = strLit s
+
+toText (Int n)   = textBuild n
+toText (Float n) = textBuild n
+toText (Ratio v) = numer v <> "/" <> denom v
+  where
+  numer = textBuild . numerator
+  denom = textBuild . denominator
 
 -- collection expression
 toText (Pair e1 e2) = parens $ ", " <> spaceSep [e1, e2]
