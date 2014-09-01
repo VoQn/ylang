@@ -9,7 +9,7 @@ module Ylang.Syntax
   toText
  ) where
 
-import qualified Data.Text as T hiding (singleton)
+-- import qualified Data.Text as T hiding (singleton)
 import qualified Data.Text.Lazy.Builder as T
 
 import Data.Monoid
@@ -75,7 +75,10 @@ mjoin' [] s (e:es) = mjoin' [e] s es
 mjoin' rs s (e:es) = mjoin' (rs ++ [s, e]) s es
 
 spSep :: [Expr] -> T.Builder
-spSep = mjoin " " . map toText
+spSep = mjoin " " . map textBuild
+
+instance Display Expr where
+  textBuild = toText
 
 toText :: Expr -> T.Builder
 -- atomic expression
@@ -84,16 +87,15 @@ toText (Void) = "()"
 toText (Boolean True)  = "yes"
 toText (Boolean False) = "no"
 
-toText (Atom s)    = T.fromString s
-toText (Keyword k) = ":" <> T.fromString k
+toText (Atom s)    = textBuild s
+toText (Keyword k) = ":" <> textBuild k
 
-toText (Int n)     = T.fromString $ show n
-toText (Float n)   = T.fromString $ show n
+toText (Int n)     = textBuild n
+toText (Float n)   = textBuild n
 toText (Ratio v) =
-  let n = numerator v
-      d = denominator v
-      c = T.fromString . show
-  in (c n) <> "/" <> (c d)
+  let n = textBuild $ numerator v
+      d = textBuild $ denominator v
+  in n <> "/" <> d
 
 toText (Char c)   = chrLit c
 toText (String s) = strLit s
@@ -109,10 +111,10 @@ toText (Arrow i as r) = parens $ "-> " <> spSep (i : as ++ [r])
 toText (Func i as es r) = parens $ mjoin " " ["\\", as', es']
   where
   as' = case as of
-    [] -> toText i
+    [] -> textBuild i
     _  -> parens $ spSep (i : as)
   es' = case es of
-    [] -> toText r
+    [] -> textBuild r
     _  -> spSep (es ++ [r])
 
 toText (Define n v) = parens $ "= " <> mjoin " " exps
@@ -120,17 +122,17 @@ toText (Define n v) = parens $ "= " <> mjoin " " exps
   exps = case v of
     Func i as es r -> [func, body]
       where
-        args' = spSep $ i : as
-        func = parens $ (T.fromString n) <> " " <> args'
+        arg' = spSep $ i : as
+        func = parens $ textBuild n <> " " <> arg'
         body = case es of
-          []  -> toText r
+          []  -> textBuild r
           _   -> spSep (es ++ [r])
-    _ -> [T.fromString n, toText v]
+    _ -> [textBuild n, textBuild v]
 
 toText (Declare n pm as r) = parens $ ": " <> mjoin " " (n' : pr ++ [rt])
   where
-  n' = T.fromString n
+  n' = textBuild n
   rt = case as of
-    [] -> toText r
+    [] -> textBuild r
     _  -> parens $ "-> " <> spSep (as ++ [r])
-  pr = map toText pm
+  pr = map textBuild pm
