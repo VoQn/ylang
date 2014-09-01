@@ -29,6 +29,7 @@ data Ty
 
 instance Display Ty where
   textBuild t = case t of
+    TyUnit -> "()"
     TySet  -> "Set"
 
     TyBool -> "Bool"

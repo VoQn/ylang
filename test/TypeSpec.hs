@@ -8,6 +8,10 @@ import Ylang.Display (toString)
 spec :: Spec
 spec = do
   describe "show ylang type" $ do
+
+    it "Unit type" $
+      toString TyUnit `shouldBe` "()"
+
     it "Set type" $
       toString TySet `shouldBe` "Set"
 
