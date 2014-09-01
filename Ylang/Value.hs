@@ -17,3 +17,4 @@ data Val
 
   -- function value
   | ValFunc
+  deriving (Eq, Ord, Show)
