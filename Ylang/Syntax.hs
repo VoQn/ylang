@@ -73,8 +73,8 @@ instance Display Expr where
     Float n -> textBuild n
     Ratio v -> numer v <> "/" <> denom v
       where
-        numer = textBuild . numerator
-        denom = textBuild . denominator
+      numer = textBuild . numerator
+      denom = textBuild . denominator
 
     -- collection expression
     Pair e1 e2 -> parens $ ", " <> spaceSep [e1, e2]
