@@ -4,15 +4,12 @@ module Ylang.Syntax
  (
   Name,
   Expr(..),
-  showRatio,
-  currying,
-  toText
+  currying
  ) where
 
--- import qualified Data.Text as T hiding (singleton)
-import qualified Data.Text.Lazy.Builder as T
+import Data.Text.Lazy.Builder (Builder)
 
-import Data.Monoid
+import Data.Monoid ((<>))
 
 import Data.Ratio (numerator, denominator)
 import Data.List (intercalate)
@@ -69,7 +66,7 @@ currying f = case f of
 instance Display Expr where
   textBuild = toText
 
-toText :: Expr -> T.Builder
+toText :: Expr -> Builder
 -- atomic expression
 toText (Void) = "()"
 
