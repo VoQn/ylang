@@ -16,6 +16,9 @@ instance Display Char where
 instance Display String where
   textBuild = LB.fromString
 
+instance Display Int where
+  textBuild = LB.fromString . show
+
 instance Display Integer where
   textBuild = LB.fromString . show
 

@@ -1,6 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Ylang.Type where
 
+import Data.Monoid ((<>))
 import Ylang.Syntax
+import Ylang.Display
 
 data Ty
   = TyUnit  -- ()
@@ -22,9 +25,10 @@ data Ty
   --
   | TyFunc Ty Ty -- function
   | TyVar Name Int -- type variable
+  deriving (Eq, Ord, Show)
 
-instance Show Ty where
-  show t = case t of
+instance Display Ty where
+  textBuild t = case t of
     TySet  -> "Set"
 
     TyBool -> "Bool"
@@ -38,5 +42,5 @@ instance Show Ty where
     TyStr　-> "String"
     TyRope -> "Rope"
 
-    TyVar v i -> v ++ show i
-    TyFunc t1 t2 -> "(-> " ++ show t1 ++ " " ++ show t2 ++ ")"
+    TyVar v i -> textBuild v <> textBuild i
+    TyFunc t1 t2 -> "(-> " <> textBuild t1 <> " " <> textBuild t2 <> ")"
