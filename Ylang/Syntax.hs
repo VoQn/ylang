@@ -7,7 +7,6 @@ module Ylang.Syntax
   currying
  ) where
 
-import Data.Text.Lazy.Builder (Builder)
 import Data.Monoid ((<>))
 import Data.Ratio (numerator, denominator)
 
@@ -57,61 +56,56 @@ currying f = case f of
   _ -> f
 
 instance Display Expr where
-  textBuild = toText
+  textBuild e = case e of
+    -- atomic expression
+    Void   -> "()"
+    Atom s -> textBuild s
 
-toText :: Expr -> Builder
--- atomic expression
-toText (Void) = "()"
+    Boolean True  -> "yes"
+    Boolean False -> "no"
 
-toText (Boolean True)  = "yes"
-toText (Boolean False) = "no"
+    Char   c -> chrLit c
+    String s -> strLit s
 
-toText (Atom s)    = textBuild s
-toText (Keyword k) = ":" <> textBuild k
+    Keyword k -> ":" <> textBuild k
 
-toText (Int n)     = textBuild n
-toText (Float n)   = textBuild n
-toText (Ratio v) =
-  let n = textBuild $ numerator v
-      d = textBuild $ denominator v
-  in n <> "/" <> d
-
-toText (Char c)   = chrLit c
-toText (String s) = strLit s
-
--- collection expression
-toText (Pair e1 e2) = parens $ ", " <> spaceSep [e1, e2]
-toText (Array es)   = brackets $ spaceSep es
-
--- factor
-toText (Call e1 e2)   = parens $ spaceSep $ e1 : e2
-toText (Arrow i as r) = parens $ "-> " <> spaceSep ((i : as) ++ [r])
-
-toText (Func i as es r) = parens $ spaceSep ["\\", as', es']
-  where
-  as' = case as of
-    [] -> textBuild i
-    _  -> parens $ spaceSep (i : as)
-  es' = case es of
-    [] -> textBuild r
-    _  -> spaceSep (es ++ [r])
-
-toText (Define n v) = parens $ "= " <> spaceSep exps
-  where
-  exps = case v of
-    Func i as es r -> [func, body]
+    Int   n -> textBuild n
+    Float n -> textBuild n
+    Ratio v -> numer v <> "/" <> denom v
       where
-        arg' = spaceSep $ i : as
-        func = parens $ textBuild n <> " " <> arg'
-        body = case es of
-          []  -> textBuild r
-          _   -> spaceSep (es ++ [r])
-    _ -> [textBuild n, textBuild v]
+      numer = textBuild . numerator
+      denom = textBuild . denominator
 
-toText (Declare n pm as r) = parens $ ": " <> spaceSep (n' : pr ++ [rt])
-  where
-  n' = textBuild n
-  rt = case as of
-    [] -> textBuild r
-    _  -> parens $ "-> " <> spaceSep (as ++ [r])
-  pr = map textBuild pm
+    -- collection expression
+    Pair e1 e2 -> parens $ ", " <> spaceSep [e1, e2]
+    Array es   -> brackets $ spaceSep es
+
+    -- factor
+    Call e1 e2   -> parens $ spaceSep $ e1 : e2
+    Arrow i as r -> parens $ "-> " <> spaceSep ((i : as) ++ [r])
+
+    Func i as es r
+      -> parens $ spaceSep ["\\", form i as, body r es]
+      where
+      form x [] = textBuild x
+      form x xs = parens $ spaceSep (x:xs)
+      body x [] = textBuild x
+      body x xs = spaceSep $ xs ++ [x]
+
+    Define n (Func i as es r)
+      -> parens $ spaceSep ["=", func, body es r]
+      where
+      func = parens $ spaceSep form
+      form = textBuild n : map textBuild (i : as)
+      body [] y = textBuild y
+      body xs y = spaceSep (xs ++ [y])
+
+    Define n v
+      -> parens $ spaceSep ["=", textBuild n, textBuild v]
+
+    Declare n pm as r
+      -> parens $ ": " <> spaceSep ((textBuild n) : pr ++ [ret as r])
+      where
+      ret [] y = textBuild y
+      ret xs y = parens $ "-> " <> spaceSep (xs ++ [y])
+      pr = map textBuild pm

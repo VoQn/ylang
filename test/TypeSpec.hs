@@ -3,43 +3,48 @@ module TypeSpec where
 import Test.Hspec
 
 import Ylang.Type
+import Ylang.Display (toString)
 
 spec :: Spec
 spec = do
   describe "show ylang type" $ do
+
+    it "Unit type" $
+      toString TyUnit `shouldBe` "()"
+
     it "Set type" $
-      show TySet `shouldBe` "Set"
+      toString TySet `shouldBe` "Set"
 
     it "Boolean type" $
-      show TyBool `shouldBe` "Bool"
+      toString TyBool `shouldBe` "Bool"
 
     it "Integer number type" $
-      show TyIntn `shouldBe` "Integer"
+      toString TyIntn `shouldBe` "Integer"
 
     it "Rational number type" $
-      show TyRatn `shouldBe` "Ratio"
+      toString TyRatn `shouldBe` "Ratio"
 
     it "Floating point number type" $
-      show TyFlon `shouldBe` "Flonum"
+      toString TyFlon `shouldBe` "Flonum"
 
     it "Keyword type" $
-      show TyKeyw `shouldBe` "Keyword"
+      toString TyKeyw `shouldBe` "Keyword"
 
     it "Charactor type" $
-      show TyChar `shouldBe` "Char"
+      toString TyChar `shouldBe` "Char"
 
     it "String type" $
-      show TyStr `shouldBe` "String"
+      toString TyStr `shouldBe` "String"
 
     it "String type" $
-      show TyRope `shouldBe` "Rope"
+      toString TyRope `shouldBe` "Rope"
 
     it "Alpha type" $
-      (show $ TyVar "a" 1) `shouldBe` "a1"
+      (toString $ TyVar "a" 1) `shouldBe` "a1"
 
     it "(-> Bool Bool) type" $
-      (show $ TyFunc TyBool TyBool) `shouldBe` "(-> Bool Bool)"
+      (toString $ TyFunc TyBool TyBool) `shouldBe` "(-> Bool Bool)"
 
     it "Arrow (-> Bool (-> Bool Bool))" $
-      (show $ TyFunc TyBool (TyFunc TyBool TyBool))
+      (toString $ TyFunc TyBool (TyFunc TyBool TyBool))
       `shouldBe` "(-> Bool (-> Bool Bool))"
