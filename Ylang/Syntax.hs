@@ -66,9 +66,6 @@ currying f = case f of
 
   _ -> f
 
-toTB :: String -> T.Builder
-toTB = T.fromText . T.pack
-
 mjoin :: Monoid t => t -> [t] -> t
 mjoin = mjoin' mempty
 
@@ -87,15 +84,15 @@ toText (Void) = "()"
 toText (Boolean True)  = "yes"
 toText (Boolean False) = "no"
 
-toText (Atom s)    = toTB s
-toText (Keyword k) = ":" <> (toTB k)
+toText (Atom s)    = T.fromString s
+toText (Keyword k) = ":" <> T.fromString k
 
-toText (Int n)     = toTB $ show n
-toText (Float n)   = toTB $ show n
+toText (Int n)     = T.fromString $ show n
+toText (Float n)   = T.fromString $ show n
 toText (Ratio v) =
   let n = numerator v
       d = denominator v
-      c = toTB . show
+      c = T.fromString . show
   in (c n) <> "/" <> (c d)
 
 toText (Char c)   = chrLit c
@@ -124,15 +121,15 @@ toText (Define n v) = parens $ "= " <> mjoin " " exps
     Func i as es r -> [func, body]
       where
         args' = spSep $ i : as
-        func = parens $ (toTB n) <> " " <> args'
+        func = parens $ (T.fromString n) <> " " <> args'
         body = case es of
           []  -> toText r
           _   -> spSep (es ++ [r])
-    _ -> [toTB n, toText v]
+    _ -> [T.fromString n, toText v]
 
 toText (Declare n pm as r) = parens $ ": " <> mjoin " " (n' : pr ++ [rt])
   where
-  n' = toTB n
+  n' = T.fromString n
   rt = case as of
     [] -> toText r
     _  -> parens $ "-> " <> spSep (as ++ [r])
