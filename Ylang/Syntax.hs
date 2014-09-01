@@ -8,11 +8,8 @@ module Ylang.Syntax
  ) where
 
 import Data.Text.Lazy.Builder (Builder)
-
 import Data.Monoid ((<>))
-
 import Data.Ratio (numerator, denominator)
-import Data.List (intercalate)
 
 import Ylang.Display
 
@@ -49,10 +46,6 @@ data Expr
   -- definition
   | Define Name Expr
   deriving (Eq, Ord, Show)
-
-showRatio :: Rational -> String
-showRatio x
-  = intercalate "/" $ map (show . ($ x)) [numerator, denominator]
 
 currying :: Expr -> Expr
 currying f = case f of
