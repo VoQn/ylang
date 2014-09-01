@@ -84,31 +84,28 @@ instance Display Expr where
     Call e1 e2   -> parens $ spaceSep $ e1 : e2
     Arrow i as r -> parens $ "-> " <> spaceSep ((i : as) ++ [r])
 
-    Func i as es r -> parens $ spaceSep ["\\", as', es']
+    Func i as es r
+      -> parens $ spaceSep ["\\", form i as, body r es]
       where
-      as' = case as of
-        [] -> textBuild i
-        _  -> parens $ spaceSep (i : as)
-      es' = case es of
-        [] -> textBuild r
-        _  -> spaceSep (es ++ [r])
+      form x [] = textBuild x
+      form x xs = parens $ spaceSep (x:xs)
+      body x [] = textBuild x
+      body x xs = spaceSep $ xs ++ [x]
 
-    Define n v -> parens $ "= " <> spaceSep exps
+    Define n (Func i as es r)
+      -> parens $ spaceSep ["=", func, body es r]
       where
-      exps = case v of
-        Func i as es r -> [func, body]
-          where
-            arg' = spaceSep $ i : as
-            func = parens $ textBuild n <> " " <> arg'
-            body = case es of
-              []  -> textBuild r
-              _   -> spaceSep (es ++ [r])
-        _ -> [textBuild n, textBuild v]
+      func = parens $ spaceSep form
+      form = textBuild n : map textBuild (i : as)
+      body [] y = textBuild y
+      body xs y = spaceSep (xs ++ [y])
 
-    Declare n pm as r -> parens $ ": " <> spaceSep (n' : pr ++ [rt])
+    Define n v
+      -> parens $ spaceSep ["=", textBuild n, textBuild v]
+
+    Declare n pm as r
+      -> parens $ ": " <> spaceSep ((textBuild n) : pr ++ [ret as r])
       where
-      n' = textBuild n
-      rt = case as of
-        [] -> textBuild r
-        _  -> parens $ "-> " <> spaceSep (as ++ [r])
+      ret [] y = textBuild y
+      ret xs y = parens $ "-> " <> spaceSep (xs ++ [y])
       pr = map textBuild pm
