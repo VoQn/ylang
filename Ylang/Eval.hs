@@ -1,13 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Ylang.Eval where
 
 import Data.List (intercalate)
-import Data.Map (Map)
 import qualified Data.Map as Map
-
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Builder as TB (toLazyText)
 
 import Control.Monad.Identity
 import Control.Monad.Error
@@ -15,8 +9,8 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
 
-import qualified Ylang.Syntax as Y (toText)
-import Ylang.Syntax hiding (toText)
+import Ylang.Syntax
+import Ylang.Display
 
 type Env = Map.Map Name Expr
 
@@ -44,8 +38,6 @@ defPref = "def_"
 
 decPref :: String
 decPref = "dec_"
-
-textToString = TL.unpack . TB.toLazyText . Y.toText
 
 eval :: Expr -> Eval Expr
   -- atomic
@@ -79,15 +71,15 @@ eval f@(Func _ _ _ _) = return f
 
 eval d@(Declare n pm as r) = do
   env <- get
-  let key = decPref
+  let key = decPref ++ n
   case Map.lookup key env of
-    Just (Declare n q b l) ->
+    Just (Declare _ q b l) ->
       let messages = [
               "<Conflict Definition>",
               "Already Defined ::",
-              textToString (Declare n q b l),
+              toString (Declare n q b l),
               "But Reassigned ::",
-              textToString (Declare n pm as r)
+              toString (Declare n pm as r)
             ]
       in throwError $ intercalate " " messages
     Nothing -> do
@@ -105,9 +97,9 @@ eval d@(Define n v) = do
         messages = [
             "<Conflict Definition>",
             "Already Defined ::",
-            textToString (Define n x),
+            toString (Define n x),
             "But Reassigned ::",
-            textToString (Define n v)
+            toString (Define n v)
           ]
         message = intercalate " " messages
       in throwError message
@@ -116,11 +108,9 @@ eval d@(Define n v) = do
     Nothing -> do
       v' <- eval v
       put $ Map.insert key v' env
-      return $ (Define n v)
+      return $ d
 
   -- identity
 eval (Call e []) = return e
 
-  -- applycation
-eval (Call (Atom x) args) = case x of
-  "+" -> undefined
+eval _ = undefined

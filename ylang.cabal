@@ -44,7 +44,8 @@ Cabal-Version:       >=1.10
 Library
   Default-Language:    Haskell2010
   GHC-Options:         -Wall
-  Exposed-Modules:       Ylang.Syntax
+  Exposed-Modules:       Ylang.Display
+                       , Ylang.Syntax
                        , Ylang.Lexer
                        , Ylang.Type
                        , Ylang.Parser

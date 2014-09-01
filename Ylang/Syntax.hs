@@ -4,18 +4,14 @@ module Ylang.Syntax
  (
   Name,
   Expr(..),
-  showRatio,
-  currying,
-  toText
+  currying
  ) where
 
-import qualified Data.Text as T hiding (singleton)
-import qualified Data.Text.Lazy.Builder as T
-
-import Data.Monoid
-
+import Data.Text.Lazy.Builder (Builder)
+import Data.Monoid ((<>))
 import Data.Ratio (numerator, denominator)
-import Data.List (intercalate)
+
+import Ylang.Display
 
 type Name = String
 
@@ -51,10 +47,6 @@ data Expr
   | Define Name Expr
   deriving (Eq, Ord, Show)
 
-showRatio :: Rational -> String
-showRatio x
-  = intercalate "/" $ map (show . ($ x)) [numerator, denominator]
-
 currying :: Expr -> Expr
 currying f = case f of
   -- currring avail with function
@@ -64,74 +56,62 @@ currying f = case f of
 
   _ -> f
 
-toTB :: String -> T.Builder
-toTB = T.fromText . T.pack
+instance Display Expr where
+  textBuild = toText
 
-mjoin :: Monoid t => t -> [t] -> t
-mjoin = mjoin' mempty
-
-mjoin' :: Monoid t => [t] -> t -> [t] -> t
-mjoin' rs _ []     = mconcat rs
-mjoin' [] s (e:es) = mjoin' [e] s es
-mjoin' rs s (e:es) = mjoin' (rs ++ [s, e]) s es
-
-spSep :: [Expr] -> T.Builder
-spSep = mjoin " " . map toText
-
-toText :: Expr -> T.Builder
+toText :: Expr -> Builder
 -- atomic expression
 toText (Void) = "()"
 
 toText (Boolean True)  = "yes"
 toText (Boolean False) = "no"
 
-toText (Atom s)    = toTB s
-toText (Keyword k) = (T.singleton ':') <> (toTB k)
+toText (Atom s)    = textBuild s
+toText (Keyword k) = ":" <> textBuild k
 
-toText (Int n)     = toTB $ show n
-toText (Float n)   = toTB $ show n
+toText (Int n)     = textBuild n
+toText (Float n)   = textBuild n
 toText (Ratio v) =
-  let n = numerator v
-      d = denominator v
-      c = toTB . show
-  in (c n) <> "/" <> (c d)
+  let n = textBuild $ numerator v
+      d = textBuild $ denominator v
+  in n <> "/" <> d
 
-toText (Char c)   = mconcat $ map T.singleton ['\'', c, '\'']
-toText (String s) = "\"" <> toTB s <> "\""
+toText (Char c)   = chrLit c
+toText (String s) = strLit s
 
 -- collection expression
-toText (Pair e1 e2) = "(, " <> spSep [e1,e2] <> ")"
-toText (Array es)   = "[" <> spSep es <> "]"
+toText (Pair e1 e2) = parens $ ", " <> spaceSep [e1, e2]
+toText (Array es)   = brackets $ spaceSep es
 
 -- factor
-toText (Call e1 e2)   = "(" <> spSep (e1 : e2) <> ")"
-toText (Arrow i as r) = "(-> " <> spSep (i : as ++ [r]) <> ")"
+toText (Call e1 e2)   = parens $ spaceSep $ e1 : e2
+toText (Arrow i as r) = parens $ "-> " <> spaceSep ((i : as) ++ [r])
 
-toText (Func i as es r) = "(" <> mjoin " " ["\\", as', es'] <> ")"
+toText (Func i as es r) = parens $ spaceSep ["\\", as', es']
   where
   as' = case as of
-    [] -> toText i
-    _ -> "(" <> spSep (i : as) <> ")"
+    [] -> textBuild i
+    _  -> parens $ spaceSep (i : as)
   es' = case es of
-    [] -> toText r
-    _  -> spSep (es ++ [r])
+    [] -> textBuild r
+    _  -> spaceSep (es ++ [r])
 
-toText (Define n v) = "(= " <> mjoin " " exps <> ")"
+toText (Define n v) = parens $ "= " <> spaceSep exps
   where
   exps = case v of
     Func i as es r -> [func, body]
       where
-        args' = spSep $ i : as
-        func = "(" <> (toTB n) <> " " <> args' <> ")"
+        arg' = spaceSep $ i : as
+        func = parens $ textBuild n <> " " <> arg'
         body = case es of
-          []  -> toText r
-          _   -> spSep (es ++ [r])
-    _ -> [toTB n, toText v]
+          []  -> textBuild r
+          _   -> spaceSep (es ++ [r])
+    _ -> [textBuild n, textBuild v]
 
-toText (Declare n pm as r) = "(: " <> mjoin " " (n' : pr ++ [rt]) <> ")"
+toText (Declare n pm as r) = parens $ ": " <> spaceSep (n' : pr ++ [rt])
   where
-  n' = toTB n
+  n' = textBuild n
   rt = case as of
-    [] -> toText r
-    _  -> "(-> " <> spSep (as ++ [r]) <> ")"
-  pr = map toText pm
+    [] -> textBuild r
+    _  -> parens $ "-> " <> spaceSep (as ++ [r])
+  pr = map textBuild pm

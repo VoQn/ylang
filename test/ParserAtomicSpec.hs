@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module ParserAtomicSpec (spec) where
@@ -13,6 +12,7 @@ import Text.Parsec.String
 import Text.Parsec.Error
 
 import Ylang.Syntax
+import Ylang.Display (toString)
 import Ylang.Parser.Atomic
 
 instance Eq ParseError where
@@ -66,27 +66,27 @@ spec = do
 
   describe "floating number literal parser" $ do
 
-    let case1 = 0.0 :: Double
-    it "can parse double number (0.0)" $
+    it "can parse double number (0.0)" $ do
+      let case1 = 0.0 :: Double
       float <? show case1 `shouldParse` Float case1
 
-    let case2 = 0.5 :: Double
-    it "can parse double number (0.5)" $
+    it "can parse double number (0.5)" $ do
+      let case2 = 0.5 :: Double
       float <? show case2 `shouldParse` Float case2
 
     it "can parse any (show (f:Double)) string" $
       property $
         \ x -> float <? show x ~= Right (Float x)
-{-
+
     it "can parse any ylang float value" $
       property $
-        \ x -> float <? show (Float x) ~= Right (Float x)
--}
+        \ x -> float <? toString (Float x) ~= Right (Float x)
+
   describe "rational number literal parser" $ do
 
-    let case1 = 0 % 1 :: Rational
-    it "can parse (0/1)" $
-      ratio <? showRatio case1 `shouldParse` Ratio case1
+    it "can parse (0/1)" $ do
+      let case1 = 0 % 1 :: Rational
+      ratio <? toString (Ratio case1) `shouldParse` Ratio case1
 
   describe "keyword literal parser" $ do
 
