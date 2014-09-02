@@ -1,13 +1,19 @@
 module Ylang.Value where
 
-import Data.Map
+import Data.Map as Map
 
 import Ylang.Type
 import Ylang.Syntax
 
-type Env = Map Name Expr
+type Env0 = Map Name Expr
 
 type Env1 = Map Name Val
+
+defaultEnv0 :: Env0
+defaultEnv0 = Map.empty
+
+defaultEnv1 :: Env1
+defaultEnv1 = Map.empty
 
 data Val
   -- primitives
@@ -27,5 +33,5 @@ data Val
 
   | ValVar Name Ty Val
   -- function value
-  | ValFunc Env Expr
+  | ValFunc Env1 Expr
   deriving (Eq, Ord, Show)
