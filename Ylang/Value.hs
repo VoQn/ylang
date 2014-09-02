@@ -7,6 +7,8 @@ import Ylang.Syntax
 
 type Env = Map Name Expr
 
+type Env1 = Map Name Val
+
 data Val
   -- primitives
   = ValBotm           -- _|_
