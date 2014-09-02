@@ -11,21 +11,25 @@ spec :: Spec
 spec = do
 
   describe "evaluate atomic value" $ do
-    prop "integer value (..., -2, -1, 0, 1, 2, ...)" $ \ x -> do
-      let exec = runEval defaultEnv $ eval $ Int x
-      getResult exec `shouldBe` Right (Int x)
+    prop "integer value (..., -2, -1, 0, 1, 2, ...)" $
+      \ x -> do
+        let exec = runEval defaultEnv $ eval $ Int x
+        getResult exec `shouldBe` Right (Int x)
 
-    prop "float value (..., 0.2, -0.1, 0.0, 0.1, 0.2, ...)" $ \ x -> do
-      let exec = runEval defaultEnv $ eval $ Float x
-      getResult exec `shouldBe` Right (Float x)
+    prop "float value (..., 0.2, -0.1, 0.0, 0.1, 0.2, ...)" $
+      \ x -> do
+        let exec = runEval defaultEnv $ eval $ Float x
+        getResult exec `shouldBe` Right (Float x)
 
-    prop "rational value (..., -1/2, 1/1, -1/3, ...)" $ \ x -> do
-      let exec = runEval defaultEnv $ eval $ Ratio x
-      getResult exec `shouldBe` Right (Ratio x)
+    prop "rational value (..., -1/2, 1/1, -1/3, ...)" $
+      \ x -> do
+        let exec = runEval defaultEnv $ eval $ Ratio x
+        getResult exec `shouldBe` Right (Ratio x)
 
-    prop "boolean value (Yes / No)" $ \ x -> do
-      let exec = runEval defaultEnv $ eval $ Boolean x
-      getResult exec `shouldBe` Right (Boolean x)
+    prop "boolean value (Yes / No)" $
+      \ x -> do
+        let exec = runEval defaultEnv $ eval $ Boolean x
+        getResult exec `shouldBe` Right (Boolean x)
 
   describe "evaluate sharrow definition assign" $ do
 
