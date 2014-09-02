@@ -15,6 +15,7 @@ import Ylang.Value
 import Ylang.Primitive
 import Ylang.Display
 
+-- OLD
 type Eval b a
   = ReaderT b (ErrorT String
                 (WriterT [String] (StateT b Identity))) a
@@ -30,6 +31,24 @@ getEnv = snd
 runEval :: b -> Eval b a -> Result a b
 runEval env evl =
   runIdentity (runStateT (runWriterT (runErrorT (runReaderT evl env))) env)
+-- OLD
+
+
+type Eval1 a
+  = ReaderT Env1 (ErrorT String
+                (WriterT [String] (StateT Env1 IO))) a
+
+type Result1 a = ((Either String a, [String]), Env1)
+
+runEval1 :: Env1 -> Eval1 a -> IO (Result1 a)
+runEval1 env evl =
+  runStateT (runWriterT (runErrorT (runReaderT evl env))) env
+
+getResult1 :: IO (Result1 a) -> IO (Either String a)
+getResult1 = fmap (fst . fst)
+
+getEnv1 :: IO (Result1 a) -> IO (Env1)
+getEnv1 = fmap snd
 
 defPref :: String
 defPref = "def_"
@@ -37,7 +56,7 @@ defPref = "def_"
 decPref :: String
 decPref = "dec_"
 
-eval1 :: Expr -> Eval Env1 Val
+eval1 :: Expr -> Eval1 Val
 eval1 Void        = return ValUnit
 eval1 (Keyword k) = return $ ValKeyw k
 eval1 (Boolean b) = return $ ValBool b
