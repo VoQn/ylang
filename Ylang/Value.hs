@@ -1,6 +1,11 @@
 module Ylang.Value where
 
+import Data.Map
+
+import Ylang.Type
 import Ylang.Syntax
+
+type Env = Map Name Expr
 
 data Val
   -- primitives
@@ -15,6 +20,10 @@ data Val
   | ValStr  String    -- string
   -- | ValRope Rope    -- rope
 
+  | ValPair Val Val   -- (, v1 v2)
+  | ValArray [Val]    -- [v1 v2 v3 ...]
+
+  | ValVar Name Ty Val
   -- function value
-  | ValFunc
+  | ValFunc Env Expr
   deriving (Eq, Ord, Show)

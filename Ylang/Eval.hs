@@ -10,9 +10,8 @@ import Control.Monad.State
 import Control.Monad.Writer
 
 import Ylang.Syntax
+import Ylang.Value
 import Ylang.Display
-
-type Env = Map.Map Name Expr
 
 type Eval a
   = ReaderT Env (ErrorT String
@@ -41,13 +40,14 @@ decPref = "dec_"
 
 eval :: Expr -> Eval Expr
   -- atomic
-eval v@(Void)      = return v
+eval v@(Void     ) = return v
 eval k@(Keyword _) = return k
 eval b@(Boolean _) = return b
-eval i@(Int _)     = return i
-eval f@(Float _)   = return f
-eval r@(Ratio _)   = return r
-eval s@(String _)  = return s
+eval i@(Int     _) = return i
+eval f@(Float   _) = return f
+eval r@(Ratio   _) = return r
+eval c@(Char    _) = return c
+eval s@(String  _) = return s
 
   -- collection
 eval (Pair e1 e2) = do
