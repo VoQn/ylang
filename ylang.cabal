@@ -48,6 +48,8 @@ Library
                        , Ylang.Syntax
                        , Ylang.Lexer
                        , Ylang.Type
+                       , Ylang.Value
+                       , Ylang.Primitive
                        , Ylang.Parser
                        , Ylang.Parser.Atomic
                        , Ylang.Eval

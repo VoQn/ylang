@@ -1,7 +1,7 @@
 module EvalSpec where
 
 import Test.Hspec
-import Test.QuickCheck (property)
+import Test.Hspec.QuickCheck (prop)
 
 import Ylang.Eval
 import Ylang.Syntax
@@ -11,42 +11,68 @@ spec :: Spec
 spec = do
 
   describe "evaluate atomic value" $ do
-    it "integer value (..., -2, -1, 0, 1, 2, ...)" $
-      property $ \ x -> do
+    prop "integer value (..., -2, -1, 0, 1, 2, ...)" $
+      \ x -> do
         let exec = runEval defaultEnv $ eval $ Int x
         getResult exec `shouldBe` Right (Int x)
 
-    it "float value (..., 0.2, -0.1, 0.0, 0.1, 0.2, ...)" $
-      property $ \ x -> do
+    prop "float value (..., 0.2, -0.1, 0.0, 0.1, 0.2, ...)" $
+      \ x -> do
         let exec = runEval defaultEnv $ eval $ Float x
         getResult exec `shouldBe` Right (Float x)
 
-    it "rational value (..., -1/2, 1/1, -1/3, ...)" $
-      property $ \ x -> do
+    prop "rational value (..., -1/2, 1/1, -1/3, ...)" $
+      \ x -> do
         let exec = runEval defaultEnv $ eval $ Ratio x
         getResult exec `shouldBe` Right (Ratio x)
 
-    it "boolean value (Yes / No)" $
-      property $ \ x -> do
+    prop "boolean value (Yes / No)" $
+      \ x -> do
         let exec = runEval defaultEnv $ eval $ Boolean x
         getResult exec `shouldBe` Right (Boolean x)
 
   describe "evaluate sharrow definition assign" $ do
 
     it "assign (= x 10)" $ do
-      let defv = Define "x" (Int 10)
-      let exec = runEval defaultEnv $ eval defv
-      getResult exec `shouldBe` Right defv
+      let exec = runEval defaultEnv $ do
+            r <- eval $ Define "x" (Int 10)
+            return r
+      getResult exec `shouldBe` Right (Define "x" (Int 10))
 
     it "assigned value vall (= x 10) (x)" $ do
-      let defv = Define "x" (Int 10)
-      let env' = getEnv $ runEval defaultEnv $ eval defv
-      let exam = runEval env' $ eval $ Atom "x"
-      getResult exam `shouldBe` Right (Int 10)
+      let exec = runEval defaultEnv $ do
+            _ <- eval $ Define "x" (Int 10)
+            r <- eval $ Atom "x"
+            return r
+      getResult exec `shouldBe` Right (Int 10)
 
     it "assigned function " $ do
-      let func = Func (Atom "x") [] [] (Atom "x")
-      let defn = Define "id" $ func
-      let env' = getEnv $ runEval defaultEnv $ eval defn
-      let exam = runEval env' $ eval $ Atom "id"
-      getResult exam `shouldBe` Right func
+      let exec = runEval defaultEnv $ do
+            _ <- eval $ Define "id" $ Func (Atom "x") [] [] (Atom "x")
+            r <- eval $ Atom "id"
+            return r
+      getResult exec `shouldBe`
+        Right (Func (Atom "x") [] [] (Atom "x"))
+
+  describe "not-defined value" $ do
+
+    it "not-assigned X" $ do
+      let exec = runEval defaultEnv $ do
+            r <- eval $ Atom "undefined-value"
+            return r
+      getResult exec `shouldBe`
+        Left "<Undefined Value> : undefined-value"
+
+  describe "can't re-assign in that scope" $ do
+
+    it "(= x 1); (= x 10)" $ do
+      let exec = runEval defaultEnv $ do
+            _ <- eval $ Define "x" $ Int 1
+            r <- eval $ Define "x" $ Int 10
+            return r
+      getResult exec `shouldBe`
+        Left (
+         "<Conflict Definition>" ++
+         " Already Defined :: (= x 1)" ++
+         " But Reassigned :: (= x 10)"
+        )

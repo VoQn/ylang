@@ -3,6 +3,7 @@ module Ylang.Eval where
 import Data.List (intercalate)
 import qualified Data.Map as Map
 
+import Control.Applicative ((<$>), (<*>))
 import Control.Monad.Identity
 import Control.Monad.Error
 import Control.Monad.Reader
@@ -10,13 +11,12 @@ import Control.Monad.State
 import Control.Monad.Writer
 
 import Ylang.Syntax
+import Ylang.Value
 import Ylang.Display
 
-type Env = Map.Map Name Expr
-
-type Eval a
-  = ReaderT Env (ErrorT String
-                (WriterT [String] (StateT Env Identity))) a
+type Eval b a
+  = ReaderT b (ErrorT String
+                (WriterT [String] (StateT b Identity))) a
 
 type Result a b = ((Either String a, [String]), b)
 
@@ -26,7 +26,7 @@ getResult = fst . fst
 getEnv :: Result a b -> b
 getEnv = snd
 
-runEval :: Env -> Eval a -> Result a Env
+runEval :: b -> Eval b a -> Result a b
 runEval env evl =
   runIdentity (runStateT (runWriterT (runErrorT (runReaderT evl env))) env)
 
@@ -39,15 +39,38 @@ defPref = "def_"
 decPref :: String
 decPref = "dec_"
 
-eval :: Expr -> Eval Expr
+eval1 :: Expr -> Eval Env1 Val
+eval1 Void        = return ValUnit
+eval1 (Keyword k) = return $ ValKeyw k
+eval1 (Boolean b) = return $ ValBool b
+eval1 (Int     i) = return $ ValIntn i
+eval1 (Float   f) = return $ ValFlon f
+eval1 (Ratio   r) = return $ ValRatn r
+eval1 (Char    c) = return $ ValChar c
+eval1 (String  s) = return $ ValStr s
+
+eval1 (Pair e1 e2) = ValPair <$> eval1 e1 <*> eval1 e2
+eval1 (Array es)   = ValArray <$> mapM eval1 es
+
+eval1 (Atom n) = do
+  env <- get
+  let key = defPref ++ n
+  case Map.lookup key env of
+    Just x  -> return x
+    Nothing -> throwError $ "<Undefined Value> : " ++ n
+
+eval1 _ = return $ ValBotm
+
+eval :: Expr -> Eval Env Expr
   -- atomic
-eval v@(Void)      = return v
+eval v@(Void     ) = return v
 eval k@(Keyword _) = return k
 eval b@(Boolean _) = return b
-eval i@(Int _)     = return i
-eval f@(Float _)   = return f
-eval r@(Ratio _)   = return r
-eval s@(String _)  = return s
+eval i@(Int     _) = return i
+eval f@(Float   _) = return f
+eval r@(Ratio   _) = return r
+eval c@(Char    _) = return c
+eval s@(String  _) = return s
 
   -- collection
 eval (Pair e1 e2) = do
