@@ -12,6 +12,7 @@ import Control.Monad.Writer
 
 import Ylang.Syntax
 import Ylang.Value
+import Ylang.Primitive
 import Ylang.Display
 
 type Eval b a
@@ -29,9 +30,6 @@ getEnv = snd
 runEval :: b -> Eval b a -> Result a b
 runEval env evl =
   runIdentity (runStateT (runWriterT (runErrorT (runReaderT evl env))) env)
-
-defaultEnv :: Env
-defaultEnv = Map.empty
 
 defPref :: String
 defPref = "def_"
@@ -59,9 +57,15 @@ eval1 (Atom n) = do
     Just x  -> return x
     Nothing -> throwError $ "<Undefined Value> : " ++ n
 
+eval1 (Call (Atom "+") es) = do
+  vs <- mapM eval1 es
+  case adds vs of
+    Right rs -> return $ rs
+    Left m -> throwError m
+
 eval1 _ = return $ ValBotm
 
-eval :: Expr -> Eval Env Expr
+eval :: Expr -> Eval Env0 Expr
   -- atomic
 eval v@(Void     ) = return v
 eval k@(Keyword _) = return k
