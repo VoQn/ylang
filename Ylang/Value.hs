@@ -35,3 +35,18 @@ data Val
   -- function value
   | ValFunc Env1 Expr
   deriving (Eq, Ord, Show)
+
+showType :: Val -> String
+showType x = case x of
+  ValBotm -> "Any"
+  ValUnit -> "Unit"
+  ValKeyw _ -> "Keyword"
+  ValBool _ -> "Boolean"
+  ValIntn _ -> "Integer"
+  ValFlon _ -> "Flonum"
+  ValRatn _ -> "Rational"
+  ValChar _ -> "Charactor"
+  ValStr  _ -> "String"
+  ValPair v1 v2 -> "(, " ++ showType v1 ++ " " ++ showType v2 ++ ")"
+
+  _ -> "UnknownType"
