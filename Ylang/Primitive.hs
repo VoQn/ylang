@@ -9,7 +9,8 @@ module Ylang.Primitive
     adds,
     ands,
     ors,
-    xors
+    xors,
+    nots
   ) where
 
 import Ylang.Value
@@ -96,3 +97,7 @@ notUnary :: Val -> Either String Val
 notUnary (ValBool i) = Right $ ValBool (not i)
 notUnary ValBotm = undefinedFound
 notUnary _ = typeNotMatch
+
+nots :: Variadic Val
+nots (e:[]) = notUnary e
+nots (e:es) = Left "Too Parameter"

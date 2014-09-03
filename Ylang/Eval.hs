@@ -87,15 +87,9 @@ eval1 (Call (Atom "+") es) = variadicE adds es
 
 -- boolean operation
 eval1 (Call (Atom "&") es) = variadicE ands es
-eval1 (Call (Atom "|") es) = variadicE ors es
-eval1 (Call (Atom "~") (e:[])) = do
-  v <- eval1 e
-  case notUnary v of
-    Right x -> return x
-    Left  m -> throwError m
-eval1 (Call (Atom "~") (e:es)) = throwError "Too Parameter"
-
--- not
+eval1 (Call (Atom "|") es) = variadicE ors  es
+eval1 (Call (Atom "^") es) = variadicE xors es
+eval1 (Call (Atom "~") es) = variadicE nots es
 
 eval1 _ = return $ ValBotm
 
