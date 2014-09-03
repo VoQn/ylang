@@ -76,11 +76,18 @@ eval1 (Atom n) = do
     Just x  -> return x
     Nothing -> throwError $ "<Undefined Value> : " ++ n
 
+-- add
 eval1 (Call (Atom "+") es) = do
   vs <- mapM eval1 es
   case adds vs of
     Right rs -> return $ rs
     Left m -> throwError m
+
+-- and
+
+-- or
+
+-- not
 
 eval1 _ = return $ ValBotm
 
