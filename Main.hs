@@ -6,7 +6,10 @@ import System.IO
 import System.Environment
 import System.Console.Haskeline
 
+import Ylang.Syntax
 import Ylang.Parser
+import Ylang.Value
+import Ylang.Eval
 
 main :: IO ()
 main = do
@@ -16,20 +19,38 @@ main = do
     [fname] -> processFile fname >> return ()
 
 repl :: IO ()
-repl = runInputT defaultSettings loop
+repl = do
+  runInputT defaultSettings (loop initEnv)
   where
-    loop = do
+    loop env = do
       minput <- getInputLine "ylsh> "
       case minput of
         Nothing    -> outputStrLn "Goodbye."
-        Just input -> (liftIO $ process input) >> loop
+        Just input -> do
+          env' <- liftIO $ process env input
+          case env' of
+            Just envn -> loop envn
+            Nothing   -> loop env
 
-process :: String -> IO ()
-process line = do
-  let res = parseTopLevel line
+initEnv :: Env1
+initEnv = defaultEnv1
+
+process :: Env1 -> String -> IO (Maybe Env1)
+process env line = do
+  case parseTopLevel line of
+    Left  err  -> print err >> return Nothing
+    Right exprs -> do
+      envn <- evaluate env exprs
+      return $ Just envn
+
+processFile :: String -> IO (Maybe Env1)
+processFile fname = readFile fname >>= process initEnv
+
+evaluate :: Env1 -> [Expr] -> IO Env1
+evaluate env exs = do
+  let exec = runEval1 env $ mapM eval1 exs
+  res <- getResult1 exec
   case res of
-    Left  err  -> print err
-    Right expr -> mapM_ print expr
-
-processFile :: String -> IO ()
-processFile fname = readFile fname >>= process
+    Left  err -> liftIO $ print err
+    Right val -> liftIO $ print val
+  getEnv1 exec

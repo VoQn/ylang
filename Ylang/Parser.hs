@@ -41,7 +41,8 @@ factor
    =  try declare
   <|> try define
   <|> try closure
-  <|> call
+  <|> try call
+  <|> (parens expr)
   <?> "Functional Expr"
 
 -- |
@@ -161,7 +162,7 @@ call = L.parens form
   where
   form = do
     func <- caller
-    args <- many expr
+    args <- many (many space >> expr)
     return $ modify func args
   modify f [] = f
   modify f as = S.Call f as

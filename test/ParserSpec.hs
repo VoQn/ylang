@@ -148,3 +148,21 @@ spec = do
     it "can parse comprex declaration : (: f (: t Set) (-> t t))" $
       declare <? "(: f (: t Set) (-> t t))" `shouldParse`
       Declare "f" [Declare "t" [] [] (Atom "Set")] [Atom "t"] (Atom "t")
+
+  describe "call parser" $ do
+
+    it "can parse (+ 1 2 3)" $
+      call <? "(+ 1 2 3)" `shouldParse`
+      Call (Atom "+") [Int 1, Int 2, Int 3]
+
+    it "can parse (~ yes)" $
+      call <? "(~ yes)" `shouldParse`
+      Call (Atom "~") [Boolean True]
+
+    it "can parse (& yes yes)" $
+      call <? "(& yes yes)" `shouldParse`
+      Call (Atom "&") [Boolean True, Boolean True]
+
+    it "can parse (| x y)" $
+      call <? "(| x y)" `shouldParse`
+      Call (Atom "|") [Atom "x", Atom "y"]
