@@ -56,6 +56,12 @@ defPref = "def_"
 decPref :: String
 decPref = "dec_"
 
+variadicE f es = do
+  vs <- mapM eval1 es
+  case f vs of
+    Right rs -> return rs
+    Left   m -> throwError m
+
 eval1 :: Expr -> Eval1 Val
 eval1 Void        = return ValUnit
 eval1 (Keyword k) = return $ ValKeyw k
@@ -77,15 +83,17 @@ eval1 (Atom n) = do
     Nothing -> throwError $ "<Undefined Value> : " ++ n
 
 -- add
-eval1 (Call (Atom "+") es) = do
-  vs <- mapM eval1 es
-  case adds vs of
-    Right rs -> return $ rs
-    Left m -> throwError m
+eval1 (Call (Atom "+") es) = variadicE adds es
 
--- and
-
--- or
+-- boolean operation
+eval1 (Call (Atom "&") es) = variadicE ands es
+eval1 (Call (Atom "|") es) = variadicE ors es
+eval1 (Call (Atom "~") (e:[])) = do
+  v <- eval1 e
+  case notUnary v of
+    Right x -> return x
+    Left  m -> throwError m
+eval1 (Call (Atom "~") (e:es)) = throwError "Too Parameter"
 
 -- not
 

@@ -19,19 +19,22 @@ spec = do
       (ValBool x) `orBin` (ValBool y) `shouldBeRight` ValBool (x || y)
 
     prop "(: (^ x y) Boolean)" $ \ x y ->
-      (ValBool x) `xorBin` (ValBool y) `shouldBeRight` ValBool (not (x && y) && (x || y))
+      (ValBool x) `xorBin` (ValBool y) `shouldBeRight`
+      ValBool (not (x && y) && (x || y))
 
     prop "(: (~ x) Boolean)" $ \ x ->
       notUnary (ValBool x) `shouldBeRight` ValBool (not x)
 
     prop "(: (& x y z ...) Boolean)" $ \ xs ->
       xs /= [] ==>
-      ands (map ValBool xs) `shouldBeRight` ValBool (foldl (&&) True xs)
+      ands (map ValBool xs) `shouldBeRight`
+      ValBool (foldl (&&) True xs)
 
     prop "(: (| x y z ...) Boolean)" $ \ xs ->
       xs /= [] ==>
-      ors (map ValBool xs) `shouldBeRight` ValBool (foldl (||) False xs)
-    
+      ors (map ValBool xs) `shouldBeRight`
+      ValBool (foldl (||) False xs)
+
   describe "primitive Arithmetic calcuation" $ do
     prop "(: (+ x y) Integer)" $ \ x y ->
       (ValIntn x) `addBin` (ValIntn y) `shouldBeRight` ValIntn (x + y)

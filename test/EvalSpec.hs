@@ -77,17 +77,3 @@ spec = do
          " Already Defined :: (= x 1)" ++
          " But Reassigned :: (= x 10)"
         )
-
-  describe "Primitive Add Operation (+)" $ do
-
-    it "(+ 1 2)" $ do
-      let exec = runEval1 defaultEnv1 $ do
-            r <- eval1 $ Call (Atom "+") [Int 1, Int 2]
-            return r
-      getResult1 exec `shouldReturn` Right (ValIntn 3)
-
-    it "(+ 1 2 3 4 5)" $ do
-      let exec = runEval1 defaultEnv1 $ do
-            r <- eval1 $ Call (Atom "+") [Int 1, Int 2, Int 3, Int 4, Int 5]
-            return r
-      getResult1 exec `shouldReturn` Right (ValIntn 15)
