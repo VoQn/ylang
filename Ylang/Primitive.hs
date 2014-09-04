@@ -12,7 +12,7 @@ module Ylang.Primitive
     xors,
     nots
   ) where
-
+import Ylang.Display
 import Ylang.Value
 
 type BinOp a = a -> a -> Either String a
@@ -39,7 +39,7 @@ undefinedFound = Left "Undefined"
 
 unknownImplError :: String -> Val -> Either String Val
 unknownImplError fn x = Left $
-  "Undefined Implement " ++ fn ++ " for " ++ showType x ++ " type"
+  "Undefined Implement " ++ fn ++ " for " ++ toString (getType x) ++ " type"
 
 typeNotMatch :: Either String Val
 typeNotMatch = Left "Type Not Match"

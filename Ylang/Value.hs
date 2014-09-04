@@ -93,19 +93,3 @@ getType = \case
   ValArray vs -> TyArray $ map getType vs
 
   ValVar _ t _ -> t
-
-showType :: Val -> String
-showType = \case
-  ValBotm   -> "Any"
-  ValUnit   -> "Unit"
-  ValKeyw _ -> "Keyword"
-  ValBool _ -> "Boolean"
-  ValIntn _ -> "Integer"
-  ValFlon _ -> "Flonum"
-  ValRatn _ -> "Rational"
-  ValChr  _ -> "Charactor"
-  ValStr  _ -> "String"
-
-  ValPair v1 v2 -> "(, " ++ showType v1 ++ " " ++ showType v2 ++ ")"
-
-  _ -> "UnknownType"
