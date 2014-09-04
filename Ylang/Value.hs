@@ -52,7 +52,9 @@ instance Display Val where
     ValBool False -> "no"
     ValIntn i -> textBuild i
     ValFlon f -> textBuild f
-    ValRatn r -> numer r <> "/" <> denom r
+    ValRatn r
+      | denominator r == 1 -> numer r
+      | otherwise          -> numer r <> "/" <> denom r
       where
       numer = textBuild . numerator
       denom = textBuild . denominator

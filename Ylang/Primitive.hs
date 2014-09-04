@@ -53,10 +53,22 @@ addBin x y = case (x, y) of
   (ValFlon i, ValFlon j) -> Right $ ValFlon (i + j)
   (ValRatn i, ValRatn j) -> Right $ ValRatn (i + j)
 
+  (ValIntn i, ValFlon j) -> Right $ ValRatn (fromInteger i + toRational j)
+  (ValIntn i, ValRatn j) -> Right $ ValRatn (fromInteger i + j)
+  (ValFlon i, ValRatn j) -> Right $ ValRatn (toRational  i + j)
+  (ValFlon _, ValIntn _) -> addBin y x
+  (ValRatn _, ValIntn _) -> addBin y x
+  (ValRatn _, ValFlon _) -> addBin y x
+
+  (ValChr a, ValChr b) -> Right $ ValStr (a:b:[])
+  (ValChr a, ValStr b) -> Right $ ValStr (a:b)
+  (ValStr a, ValChr b) -> Right $ ValStr (a ++ [b])
+  (ValStr a, ValStr b) -> Right $ ValStr (a ++ b)
+
   (ValBotm, _) -> undefinedFound
   (_, ValBotm) -> undefinedFound
   (_, _)
-    | showType x == showType y -> unknownImplError "(+)" x
+    | getType x == getType y -> unknownImplError "(+)" x
     | otherwise -> typeNotMatch
 
 adds :: Variadic Val
@@ -69,7 +81,7 @@ andBin x y = case (x, y) of
   (ValBotm, _) -> undefinedFound
   (_, ValBotm) -> undefinedFound
   (_, _)
-    | showType x == showType y -> unknownImplError "(&)" x
+    | getType x == getType y -> unknownImplError "(&)" x
     | otherwise -> typeNotMatch
 
 ands :: Variadic Val
@@ -82,7 +94,7 @@ orBin x y = case (x, y) of
   (ValBotm, _) -> undefinedFound
   (_, ValBotm) -> undefinedFound
   (_, _)
-    | showType x == showType y -> unknownImplError "(|)" x
+    | getType x == getType y -> unknownImplError "(|)" x
     | otherwise -> typeNotMatch
 
 ors :: Variadic Val
@@ -97,7 +109,7 @@ xorBin x y = case (x, y) of
   (ValBotm, _) -> undefinedFound
   (_, ValBotm) -> undefinedFound
   (_, _)
-    | showType x == showType y -> unknownImplError "(^)" x
+    | getType x == getType y -> unknownImplError "(^)" x
     | otherwise -> typeNotMatch
 
 xors :: Variadic Val
