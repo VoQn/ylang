@@ -31,7 +31,7 @@ spec = do
       toString TyKeyw `shouldBe` "Keyword"
 
     it "Charactor type" $
-      toString TyChar `shouldBe` "Char"
+      toString TyChr `shouldBe` "Char"
 
     it "String type" $
       toString TyStr `shouldBe` "String"
