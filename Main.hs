@@ -10,6 +10,7 @@ import Ylang.Syntax
 import Ylang.Parser
 import Ylang.Value
 import Ylang.Eval
+import Ylang.Display as D
 
 main :: IO ()
 main = do
@@ -52,5 +53,5 @@ evaluate env exs = do
   res <- getResult1 exec
   case res of
     Left  err -> liftIO $ print err
-    Right val -> liftIO $ print val
+    Right val -> liftIO $ mapM_ D.display val
   getEnv1 exec

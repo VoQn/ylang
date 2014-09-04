@@ -18,10 +18,13 @@ data Ty
 
   -- Letter
   | TyKeyw  -- keyword type
-  | TyChar  -- charactor type
+  | TyChr  -- charactor type
   | TyStr   -- string
   | TyRope
 
+  -- Collection
+  | TyPair Ty Ty
+  | TyArray [Ty]
   --
   | TyFunc Ty Ty -- function
   | TyVar Name Int -- type variable
@@ -39,8 +42,8 @@ instance Display Ty where
     TyFlon -> "Flonum"
 
     TyKeyw -> "Keyword"
-    TyChar -> "Char"
-    TyStr　-> "String"
+    TyChr  -> "Char"
+    TyStr  -> "String"
     TyRope -> "Rope"
 
     TyVar v i -> textBuild v <> textBuild i

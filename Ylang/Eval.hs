@@ -69,7 +69,7 @@ eval1 (Boolean b) = return $ ValBool b
 eval1 (Int     i) = return $ ValIntn i
 eval1 (Float   f) = return $ ValFlon f
 eval1 (Ratio   r) = return $ ValRatn r
-eval1 (Char    c) = return $ ValChar c
+eval1 (Char    c) = return $ ValChr c
 eval1 (String  s) = return $ ValStr s
 
 eval1 (Pair e1 e2) = ValPair <$> eval1 e1 <*> eval1 e2
