@@ -27,7 +27,7 @@ variadic f (x1:x2:xs) = case (f x1 x2) of
 
 variadicHalt :: BinOp Val -> Val -> Variadic Val
 variadicHalt _ _ [x] = Right x
-variadicHalt f t (x1:x2:[]) = f x1 x2
+variadicHalt f _ (x1:x2:[]) = f x1 x2
 variadicHalt f t (x1:x2:xs) = case (f x1 x2) of
   Right x
     | x == t    -> Right t
@@ -122,4 +122,4 @@ notUnary _ = typeNotMatch
 
 nots :: Variadic Val
 nots (e:[]) = notUnary e
-nots (e:es) = Left "Too Parameter"
+nots (_:_) = Left "Too Parameter"
