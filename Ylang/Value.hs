@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, LambdaCase #-}
+
 module Ylang.Value where
 
 import qualified Data.Text.Lazy.Builder as LB
@@ -43,7 +44,7 @@ data Val
   deriving (Eq, Ord, Show)
 
 instance Display Val where
-  textBuild v = case v of
+  textBuild = \case
     ValBotm -> "_|_"
     ValUnit -> "()"
 
@@ -60,16 +61,24 @@ instance Display Val where
       denom = textBuild . denominator
 
     ValChr c -> chrLit c
-    ValStr  s -> strLit s
+    ValStr s -> strLit s
 
-    ValPair a b -> parens $ spaceSep $ "," : map textBuild [a,b]
-    ValArray vs -> brackets $ spaceSep $ map textBuild vs
+    ValPair a b ->
+      parens $ spaceSep $
+        "," : map textBuild [a,b]
 
-    ValVar n t v -> parens $ spaceSep $ "=" : map textBuild [v]
+    ValArray vs ->
+      brackets $ spaceSep $
+        map textBuild vs
+
+    ValVar n _ v ->
+      parens $ spaceSep $
+        "=" : textBuild n : textBuild v : []
+
     x -> LB.fromString $ show x
 
 getType :: Val -> Ty
-getType x = case x of
+getType = \case
   ValBotm   -> TySet
   ValUnit   -> TyUnit
   ValKeyw _ -> TyKeyw
@@ -84,18 +93,3 @@ getType x = case x of
   ValArray vs -> TyArray $ map getType vs
 
   ValVar _ t _ -> t
-
-showType :: Val -> String
-showType x = case x of
-  ValBotm -> "Any"
-  ValUnit -> "Unit"
-  ValKeyw _ -> "Keyword"
-  ValBool _ -> "Boolean"
-  ValIntn _ -> "Integer"
-  ValFlon _ -> "Flonum"
-  ValRatn _ -> "Rational"
-  ValChr _ -> "Charactor"
-  ValStr  _ -> "String"
-  ValPair v1 v2 -> "(, " ++ showType v1 ++ " " ++ showType v2 ++ ")"
-
-  _ -> "UnknownType"

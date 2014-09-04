@@ -12,7 +12,7 @@ module Ylang.Primitive
     xors,
     nots
   ) where
-
+import Ylang.Display
 import Ylang.Value
 
 type BinOp a = a -> a -> Either String a
@@ -27,7 +27,7 @@ variadic f (x1:x2:xs) = case (f x1 x2) of
 
 variadicHalt :: BinOp Val -> Val -> Variadic Val
 variadicHalt _ _ [x] = Right x
-variadicHalt f t (x1:x2:[]) = f x1 x2
+variadicHalt f _ (x1:x2:[]) = f x1 x2
 variadicHalt f t (x1:x2:xs) = case (f x1 x2) of
   Right x
     | x == t    -> Right t
@@ -39,7 +39,7 @@ undefinedFound = Left "Undefined"
 
 unknownImplError :: String -> Val -> Either String Val
 unknownImplError fn x = Left $
-  "Undefined Implement " ++ fn ++ " for " ++ showType x ++ " type"
+  "Undefined Implement " ++ fn ++ " for " ++ toString (getType x) ++ " type"
 
 typeNotMatch :: Either String Val
 typeNotMatch = Left "Type Not Match"
@@ -122,4 +122,4 @@ notUnary _ = typeNotMatch
 
 nots :: Variadic Val
 nots (e:[]) = notUnary e
-nots (e:es) = Left "Too Parameter"
+nots (_:_) = Left "Too Parameter"
