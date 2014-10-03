@@ -6,13 +6,13 @@ import Ylang.Type
 import Ylang.Syntax.Literal
 
 data Term
-  = TmLit   Lit            -- ^ literal
-  | TmSym   Name           -- ^ symbol
-  | TmVar   Int  Int       -- ^ λ 1     (no-name-variable-expression)
-  | TmAbs   Name Type Term -- ^ λx:T.t  (lambda abstruction)
-  | TmApp   Term Term      -- ^ f x     (apply abstruction to term)
-  | TmTyAbs Name Type Term -- ^ λX<:T.t (type abstruction)
-  | TmTyApp Term [Type]    -- ^ t [T]   (apply types to term)
+  = TmLit   Info Lit            -- ^ literal
+  | TmSym   Info Name           -- ^ symbol
+  | TmVar   Info Int  Int       -- ^ λ 1     (no-name-variable-expression)
+  | TmAbs   Info Name Type Term -- ^ λx:T.t  (lambda abstruction)
+  | TmApp   Info Term Term      -- ^ f x     (apply abstruction to term)
+  | TmTyAbs Info Name Type Term -- ^ λX<:T.t (type abstruction)
+  | TmTyApp Info Term [Type]    -- ^ t [T]   (apply types to term)
   deriving (Eq, Show)
 
 data Context
