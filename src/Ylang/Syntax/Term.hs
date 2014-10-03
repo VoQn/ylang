@@ -3,7 +3,7 @@ module Ylang.Syntax.Term where
 type Name = String
 
 data Kind
-  | KType           -- ^ *
+  = KType           -- ^ *
   | KOprt Kind Kind -- ^ * => *
   deriving (Eq, Show)
 
