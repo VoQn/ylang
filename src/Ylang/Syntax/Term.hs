@@ -3,15 +3,7 @@ module Ylang.Syntax.Term where
 import Ylang.Info
 import Ylang.Type
 
-data Lit
-  = LitBool Bool     -- ^ boolean  : yes | no
-  | LitChar Char     -- ^ charator : 'a' | 'b' | 'c' | ...
-  | LitStr  String   -- ^ string   : "abc" | "123" | ...
-  | LitKey  Name     -- ^ keyword  : :first | :last | ...
-  | LitIntn Integer  -- ^ integer  : ... | -1 | 0 | 1 | ...
-  | LitFlon Double   -- ^ flonum   : -inf | ... | -0.1 | 0 | 0.1 | ... | +inf
-  | LitRatn Rational -- ^ rational : 1/3 | 1/3 | 1/1 | ...
-  deriving (Eq, Show)
+import Ylang.Syntax.Literal
 
 data Term
   = TmLit   Lit            -- ^ literal

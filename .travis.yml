@@ -8,4 +8,4 @@ script:
   - cabal configure --enable-tests --enable-library-coverage && cabal build
   - run-cabal-test --show-details=always
 after_script:
-  - hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=test spec doctest
+  - hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=test test
