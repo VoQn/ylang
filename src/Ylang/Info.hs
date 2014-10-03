@@ -15,4 +15,4 @@ instance Display Info where
   buildText Unknown = "#unknown#"
 
   buildText FileInput { fileName = n, line = l, column = c } =
-    buildText n <> " " <> (sep "," $ map buildText [l, c])
+    buildText n <> " " <> sep "," (map buildText [l, c])
