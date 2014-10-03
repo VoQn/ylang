@@ -4,5 +4,5 @@ type Name = String
 
 data Info
   = Unknown
-  | FileImput { fileName :: Name, line :: Int, column :: Int }
+  | FileInput { fileName :: Name, line :: Int, column :: Int }
   deriving (Eq, Show)
