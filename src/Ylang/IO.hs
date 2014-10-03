@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE UndecidableInstances #-}
 module Ylang.IO where
 
 import Control.Arrow
@@ -24,8 +23,8 @@ instance Display String where
 instance Display Builder where
   buildText = id
 
-instance (Show a) => Display a where
-  buildText = show >>> LB.fromString
+instance Display Int where
+  buildText = show >>> buildText
 
 parens :: Builder -> Builder
 parens = ("(" <>) >>> (<> ")")
