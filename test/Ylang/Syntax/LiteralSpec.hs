@@ -1,14 +1,52 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Ylang.Syntax.LiteralSpec where
 
+import Control.Applicative
+import Data.Text.Gen()
 import Data.Ratio
 import Test.Hspec
+import Test.Hspec.QuickCheck
+import Test.QuickCheck
 import Ylang.IO
 import Ylang.Syntax.Literal
 
+instance Arbitrary Lit where
+  arbitrary = oneof [
+      LitBool <$> arbitrary
+    , LitChr  <$> arbitrary
+    , LitStr  <$> arbitrary
+    , LitKey  <$> arbitrary
+    , LitIntn <$> arbitrary
+    , LitFlon <$> arbitrary
+    , LitRatn <$> arbitrary
+    ]
+
+isFractional :: Lit -> Bool
+isFractional (LitFlon _) = True
+isFractional _ = False
+
 spec :: Spec
-spec = describe "Ylang Literal" $
+spec = describe "Ylang Literal" $ do
+
+  describe "as an instance of Eq type-class" $ do
+
+    prop "A == B ==> B == A" $
+      \(a, b :: Lit) ->
+        (not (isFractional a) && not (isFractional b)) ==>
+        a == b `shouldBe` b == a
+
+    prop "A /= B ==> B /= A" $
+      \(a, b :: Lit) ->
+        (not (isFractional a) && not (isFractional b)) ==>
+        a /= b `shouldBe` b /= a
+
+  describe "as an instance of Show type-class" $
+
+    prop "show (info :: Info)" $
+      \(info :: Lit) ->
+        showList [info] `seq` shows info `seq` show info `seq` True
 
   describe "as an instance of Display" $ do
 

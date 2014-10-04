@@ -95,4 +95,5 @@ Test-Suite test
                   , QuickCheck
                   , parsec
                   , text >=1.1 && <1.2
+                  , bytestring >=0.10 && <0.11
                   , ylang

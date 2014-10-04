@@ -3,6 +3,7 @@
 module Ylang.IO where
 
 import Control.Arrow
+import Data.Text (Text)
 import Data.Text.Lazy.Builder (Builder)
 import qualified Data.Text.Lazy.Builder as LB
 import qualified Data.Text.Lazy.IO as LIO
@@ -20,6 +21,9 @@ instance Display Char where
 
 instance Display String where
   buildText = LB.fromString
+
+instance Display Text where
+  buildText = LB.fromText
 
 instance Display Builder where
   buildText = id
