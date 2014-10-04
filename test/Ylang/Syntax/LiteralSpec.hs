@@ -25,3 +25,12 @@ spec = describe "Ylang Literal" $
 
     it "buildText :keyword => \":keyword\"" $
       buildText (LitKey "keyword") `shouldBe` ":keyword"
+
+    it "buildText 0 => \"0\"" $
+      buildText (LitIntn 0) `shouldBe` "0"
+
+    it "buildText 1 => \"1\"" $
+      buildText (LitIntn 1) `shouldBe` "1"
+
+    it "buildText -1 => \"-1\"" $
+      buildText (LitIntn (-1)) `shouldBe` "-1"

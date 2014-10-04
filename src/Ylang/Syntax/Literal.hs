@@ -34,4 +34,6 @@ instance Display Lit where
   buildText (LitStr s) = "\"" <> buildText s <> "\""
   buildText (LitKey k) = ":" <> buildText k
 
+  buildText (LitIntn i) = buildText i
+
   buildText _ = undefined
