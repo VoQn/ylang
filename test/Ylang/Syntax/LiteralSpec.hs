@@ -34,3 +34,12 @@ spec = describe "Ylang Literal" $
 
     it "buildText -1 => \"-1\"" $
       buildText (LitIntn (-1)) `shouldBe` "-1"
+
+    it "buildText 0.0 => \"0.0\"" $
+      buildText (LitFlon 0) `shouldBe` "0.0"
+
+    it "buildText 0.1 => \"0.1\"" $
+      buildText (LitFlon 0.1) `shouldBe` "0.1"
+
+    it "buildText -0.5 => \"-0.5\"" $
+      buildText (LitFlon (-0.5)) `shouldBe` "-0.5"
