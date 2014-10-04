@@ -2,6 +2,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Ylang.Syntax.LiteralSpec where
 
+import Data.Ratio
 import Test.Hspec
 import Ylang.IO
 import Ylang.Syntax.Literal
@@ -43,3 +44,15 @@ spec = describe "Ylang Literal" $
 
     it "buildText -0.5 => \"-0.5\"" $
       buildText (LitFlon (-0.5)) `shouldBe` "-0.5"
+
+    it "buildText 0/1 => \"0/1\"" $
+      buildText (LitRatn 0) `shouldBe` "0/1"
+
+    it "buildText 1/1 => \"1/1\"" $
+      buildText (LitRatn 1) `shouldBe` "1/1"
+
+    it "buildText -1/1 => \"-1/1\"" $
+      buildText (LitRatn (-1)) `shouldBe` "-1/1"
+
+    it "buildText 1/2 => \"1/2\"" $
+      buildText (LitRatn (1 % 2)) `shouldBe` "1/2"

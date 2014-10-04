@@ -36,5 +36,4 @@ instance Display Lit where
 
   buildText (LitIntn i) = buildText i
   buildText (LitFlon f) = buildText f
-
-  buildText _ = undefined
+  buildText (LitRatn r) = buildText r
