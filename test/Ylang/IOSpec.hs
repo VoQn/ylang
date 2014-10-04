@@ -29,6 +29,14 @@ spec = describe "YLang IO Interface" $ do
     it "ASCII charactor" $
       buildText 'c' `shouldBe` "c"
 
+  describe "Int is an instance of Display" $ do
+
+    it "0" $ buildText (0 :: Int) `shouldBe` "0"
+
+    it "-1" $ buildText ((-1) :: Int) `shouldBe` "-1"
+
+    it "1" $ buildText (1 :: Int) `shouldBe` "1"
+
   describe "text-build convinators" $ do
 
     it "parens x -> \"(x)\"" $
