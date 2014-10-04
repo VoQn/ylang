@@ -23,8 +23,14 @@ instance Display String where
 instance Display Builder where
   buildText = id
 
+fromShow :: (Show a) => a -> Builder
+fromShow = show >>> buildText
+
 instance Display Int where
-  buildText = show >>> buildText
+  buildText = fromShow
+
+instance Display Integer where
+  buildText = fromShow
 
 parens :: Builder -> Builder
 parens = ("(" <>) >>> (<> ")")

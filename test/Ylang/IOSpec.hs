@@ -37,6 +37,19 @@ spec = describe "YLang IO Interface" $ do
 
     it "1" $ buildText (1 :: Int) `shouldBe` "1"
 
+  describe "Integer is an instance of Display" $ do
+
+    it "0" $ buildText (0 :: Integer) `shouldBe` "0"
+
+    it "-1" $ buildText ((-1) :: Integer) `shouldBe` "-1"
+
+    it "1" $ buildText (1 :: Integer) `shouldBe` "1"
+
+    it "9999999999999999999999999999999999999999" $ do
+      let bigInt = 9999999999999999999999999999999999999999 :: Integer
+      buildText bigInt `shouldBe`
+        "9999999999999999999999999999999999999999"
+
   describe "text-build convinators" $ do
 
     it "parens x -> \"(x)\"" $
