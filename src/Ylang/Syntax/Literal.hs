@@ -17,7 +17,9 @@ import Data.Text (Text)
 import Ylang.IO
 
 data Lit
-  = LitBool Bool     -- ^ boolean  : yes | no
+  = LitHole          -- ^ hole : _
+  | LitUnit          -- ^ unit : ()
+  | LitBool Bool     -- ^ boolean  : yes | no
   | LitChr  Char     -- ^ charator : 'a' | 'b' | 'c' | ...
   | LitStr  Text     -- ^ string   : "abc" | "123" | ...
   | LitKey  Text     -- ^ keyword  : :first | :last | ...
@@ -27,6 +29,9 @@ data Lit
   deriving (Eq, Show)
 
 instance Display Lit where
+  buildText LitHole = "_"
+  buildText LitUnit = "()"
+
   buildText (LitBool True)  = "Yes"
   buildText (LitBool False) = "No"
 

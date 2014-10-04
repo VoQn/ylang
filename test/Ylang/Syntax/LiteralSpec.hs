@@ -14,7 +14,9 @@ import Ylang.Syntax.Literal
 
 instance Arbitrary Lit where
   arbitrary = oneof [
-      LitBool <$> arbitrary
+      pure LitHole
+    , pure LitUnit
+    , LitBool <$> arbitrary
     , LitChr  <$> arbitrary
     , LitStr  <$> arbitrary
     , LitKey  <$> arbitrary
@@ -49,6 +51,12 @@ spec = describe "Ylang Literal" $ do
         showList [info] `seq` shows info `seq` show info `seq` True
 
   describe "as an instance of Display" $ do
+
+    it "buildText _ => \"_\"" $
+      buildText LitHole `shouldBe` "_"
+
+    it "buildText () => \"()\"" $
+      buildText LitUnit `shouldBe` "()"
 
     it "buildText Yes => \"Yes\"" $
       buildText (LitBool True) `shouldBe` "Yes"
