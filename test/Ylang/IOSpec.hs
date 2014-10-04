@@ -1,10 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Ylang.IOSpec where
 
+import Data.Ratio
 import Data.Text.Lazy.Builder (Builder)
-
 import Test.Hspec
-
 import Ylang.IO
 
 spec :: Spec
@@ -62,6 +61,14 @@ spec = describe "YLang IO Interface" $ do
     it "1" $ buildText (1 :: Double) `shouldBe` "1.0"
 
     it "-1" $ buildText ((-1) :: Double) `shouldBe` "-1.0"
+
+  describe "Rational is an instance of Display" $ do
+
+    it "0/1" $ buildText (0 :: Rational) `shouldBe` "0/1"
+
+    it "1/1" $ buildText (1 :: Rational) `shouldBe` "1/1"
+
+    it "-1/2" $ buildText ((-1) % 2 :: Rational) `shouldBe` "-1/2"
 
   describe "text-build convinators" $ do
 

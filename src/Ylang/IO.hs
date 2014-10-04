@@ -7,6 +7,7 @@ import Data.Text.Lazy.Builder (Builder)
 import qualified Data.Text.Lazy.Builder as LB
 import qualified Data.Text.Lazy.IO as LIO
 import Data.Monoid
+import Data.Ratio
 
 class Display a where
   buildText :: a -> Builder
@@ -34,6 +35,10 @@ instance Display Integer where
 
 instance Display Double where
   buildText = fromShow
+
+instance Display Rational where
+  buildText x =
+    sep "/" $ map buildText [numerator x, denominator x]
 
 parens :: Builder -> Builder
 parens = ("(" <>) >>> (<> ")")
