@@ -30,8 +30,8 @@ instance Display Lit where
   buildText (LitBool True)  = "Yes"
   buildText (LitBool False) = "No"
 
-  buildText (LitChr c) = "'" <> buildText c <> "'"
-  buildText (LitStr s) = "\"" <> buildText s <> "\""
+  buildText (LitChr c) = sQuote $ buildText c
+  buildText (LitStr s) = dQuote $ buildText s
   buildText (LitKey k) = ":" <> buildText k
 
   buildText (LitIntn i) = buildText i
