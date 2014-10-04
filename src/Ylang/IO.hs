@@ -32,6 +32,9 @@ instance Display Int where
 instance Display Integer where
   buildText = fromShow
 
+instance Display Double where
+  buildText = fromShow
+
 parens :: Builder -> Builder
 parens = ("(" <>) >>> (<> ")")
 

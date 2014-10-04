@@ -55,6 +55,14 @@ spec = describe "YLang IO Interface" $ do
       buildText bigNegative `shouldBe`
         "-9999999999999999999999999999999999999999"
 
+  describe "Double is an instance of Display" $ do
+
+    it "0" $ buildText (0 :: Double) `shouldBe` "0.0"
+
+    it "1" $ buildText (1 :: Double) `shouldBe` "1.0"
+
+    it "-1" $ buildText ((-1) :: Double) `shouldBe` "-1.0"
+
   describe "text-build convinators" $ do
 
     it "parens x -> \"(x)\"" $
