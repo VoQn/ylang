@@ -54,6 +54,7 @@ Library
                   , Ylang.Info
                   , Ylang.Type
                   , Ylang.Type.Kind
+                  , Ylang.Syntax.Literal
                   , Ylang.Syntax.Term
 
   build-depends:    base
