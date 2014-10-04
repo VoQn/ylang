@@ -50,6 +50,11 @@ spec = describe "YLang IO Interface" $ do
       buildText bigInt `shouldBe`
         "9999999999999999999999999999999999999999"
 
+    it "-9999999999999999999999999999999999999999" $ do
+      let bigNegative = (-9999999999999999999999999999999999999999) :: Integer
+      buildText bigNegative `shouldBe`
+        "-9999999999999999999999999999999999999999"
+
   describe "text-build convinators" $ do
 
     it "parens x -> \"(x)\"" $
