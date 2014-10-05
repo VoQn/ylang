@@ -60,7 +60,7 @@ digits :: Parser String
 digits = many1 digit
 
 tSig :: (Num a) => Parser (a -> a)
-tSig = '-' !> (pure negate) </> pure id
+tSig = '-' !> pure negate </> pure id
 
 tDig :: (Read a, Num a) => Parser a
 tDig = read <$> digits
@@ -92,5 +92,5 @@ tFlon = LitFlon <$> tFloat
 tRatn :: Parser Lit
 tRatn = LitRatn <$> tRatio
   where
-  tRatio = pack <$> tSig <*> tDig <*> tDig
-  pack s n d = s $ n % d
+  tRatio = pack <$> tSig <*> tDig <*> char '/' <*> tDig
+  pack s n _ d = s $ n % d

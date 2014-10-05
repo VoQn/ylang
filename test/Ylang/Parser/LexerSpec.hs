@@ -2,6 +2,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Ylang.Parser.LexerSpec where
 
+import Data.Ratio
 import Data.Text (Text)
 import Text.Parsec
 import Text.Parsec.Text (Parser)
@@ -30,5 +31,15 @@ spec = describe "Ylang Lexer" $ do
 
   it "parse \"-10\" => -10" $
     testParse tIntn "-10" `shouldBe` Right (LitIntn (-10))
+
   it "parse \"0.1\" => 0.1" $
     testParse tFlon "0.1" `shouldBe` Right (LitFlon 0.1)
+
+  it "parse \"-0.1\" => -0.1" $
+    testParse tFlon "-0.1" `shouldBe` Right (LitFlon (-0.1))
+
+  it "parse \"1/2\" => 1/2" $
+    testParse tRatn "1/2" `shouldBe` Right (LitRatn (1 % 2))
+
+  it "parse \"-1/10\" => -1/10" $
+    testParse tRatn "-1/10" `shouldBe` Right (LitRatn (-1 % 10))
