@@ -1,4 +1,4 @@
-Name:                ylang
+name:                ylang
 
 -- The package version.  See the Haskell package versioning policy (PVP)
 -- for standards guiding when and how versions should be incremented.
@@ -6,40 +6,21 @@ Name:                ylang
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-Version:             0.1.0.0
+version:             0.1.0.0
 
 -- A short (one-line) description of the package.
-Synopsis:            Programming langurage (scheme-like)
-
--- A longer description of the package.
+synopsis:            Programming langurage
 -- description:
+license:             Apache-2.0
+license-file:        LICENSE
+author:              Kazuhiro Mizushima
+maintainer:          voqn.tyrantist@gmail.com
 
--- The license under which the package is released.
-License:             Apache-2.0
+category:            Language
 
--- The file containing the license text.
-License-file:        LICENSE
+build-type:          Simple
 
--- The package author(s).
-Author:              Kazuhiro Mizushima
-
--- An email address to which users can send suggestions, bug reports, and
--- patches.
-Maintainer:          voqn.tyrantist@gmail.com
-
--- A copyright notice.
--- copyright:
-
-Category:            Language
-
-Build-Type:          Simple
-
--- Extra files to be distributed with the package, such as examples or a
--- README.
--- extra-source-files:
-
--- Constraint on the version of Cabal needed to build this package.
-Cabal-Version:       >=1.10
+cabal-version:       >=1.10
 
 Library
   default-language: Haskell2010
@@ -50,12 +31,14 @@ Library
                   , FlexibleInstances
                   , MultiParamTypeClasses
                   , FunctionalDependencies
+
   exposed-modules:  Ylang.IO
                   , Ylang.Info
                   , Ylang.Type
                   , Ylang.Type.Kind
                   , Ylang.Syntax.Literal
                   , Ylang.Syntax.Term
+                  , Ylang.Parser.Lexer
 
   build-depends:    base
                   , mtl
@@ -69,13 +52,6 @@ Executable ylsh
   hs-source-dirs:   src
   main-is:          Main.hs
 
-  -- Modules included in this executable, other than Main.
-  -- other-modules:
-
-  -- LANGUAGE extensions used by modules in this package.
-  -- other-extensions:
-
-  -- Other library packages from which modules are imported.
   build-depends:    base
                   , mtl
                   , containers
@@ -87,8 +63,13 @@ Test-Suite test
   type:             exitcode-stdio-1.0
   default-language: Haskell2010
   hs-source-dirs:   test
-  ghc-options:      -Wall -fno-warn-orphans
   main-is:          Spec.hs
+
+  ghc-options:      -Wall -fno-warn-orphans
+
+  other-extensions: OverloadedStrings
+                  , ScopedTypeVariables
+
   build-depends:    base
                   , containers
                   , hspec
