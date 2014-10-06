@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Ylang.Parser.LexerSpec where
+module Ylang.Parser.TokenSpec where
 
 import           Data.Ratio
 import           Data.Text            (Text)
@@ -8,7 +8,7 @@ import           Test.Hspec
 import           Text.Parsec
 import           Text.Parsec.Error
 import           Text.Parsec.Text     (Parser)
-import           Ylang.Parser.Lexer
+import           Ylang.Parser.Token
 import           Ylang.Syntax.Literal
 
 instance Eq ParseError where
