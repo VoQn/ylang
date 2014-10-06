@@ -61,3 +61,9 @@ spec = describe "Ylang Lexer" $ do
 
   it "parse \"あ い う え お\" => \"あ い う え お\""　$
     testParse tStr "\"あ い う え お\"" `shouldBe` Right (LitStr "あ い う え お")
+
+  it "parse \":keyword\" => :keyword" $
+    testParse tKey ":keyword" `shouldBe` Right (LitKey "keyword")
+
+  it "parse \":🍣\" => :🍣" $
+    testParse tKey ":🍣" `shouldBe` Right (LitKey "🍣")

@@ -15,6 +15,7 @@ module Ylang.Parser.Lexer where
 
 import           Control.Applicative  hiding (many, (<|>))
 import           Control.Monad
+import           Data.Char
 import           Data.Ratio
 import           Text.Parsec
 import           Text.Parsec.Text     (Parser)
@@ -56,6 +57,9 @@ infix 3 !>
 ---------------------------------------------------------------------
 -- Basic Token Parsers
 ---------------------------------------------------------------------
+
+notSpace :: Parser Char
+notSpace = satisfy $ not . isSpace
 
 digits :: Parser String
 digits = many1 digit
@@ -101,3 +105,6 @@ tChr = '\'' !> LitChr <$> anyChar <* char '\''
 
 tStr :: Parser Lit
 tStr = '"' !> LitStr . T.pack <$> manyTill anyChar (try $ char '"')
+
+tKey :: Parser Lit
+tKey = ':' !> LitKey . T.pack <$> many1 notSpace
