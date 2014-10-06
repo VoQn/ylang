@@ -38,6 +38,8 @@ Library
                   , Ylang.Type.Kind
                   , Ylang.Syntax.Literal
                   , Ylang.Syntax.Term
+                  , Ylang.Parser.Combinator
+                  , Ylang.Parser.Token
                   , Ylang.Parser.Lexer
 
   build-depends:    base
