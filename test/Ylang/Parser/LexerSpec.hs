@@ -20,6 +20,12 @@ testParse p = parse p "<test>"
 spec :: Spec
 spec = describe "Ylang Lexer" $ do
 
+  it "parse \"_\" => _" $
+    testParse tHole "_" `shouldBe` Right LitHole
+
+  it "parse \"()\" => ()" $
+    testParse tUnit "()" `shouldBe` Right LitUnit
+
   it "parse \"Yes\" => yes" $
     testParse tBool "Yes" `shouldBe` Right (LitBool True)
 
@@ -30,22 +36,28 @@ spec = describe "Ylang Lexer" $ do
     testParse tIntn "0" `shouldBe` Right (LitIntn 0)
 
   it "parse \"-10\" => -10" $
-    testParse tIntn "-10" `shouldBe` Right (LitIntn $ -10)
+    testParse tIntn "-10" `shouldBe` Right (LitIntn (-10))
 
   it "parse \"0.1\" => 0.1" $
     testParse tFlon "0.1" `shouldBe` Right (LitFlon 0.1)
 
   it "parse \"-0.1\" => -0.1" $
-    testParse tFlon "-0.1" `shouldBe` Right (LitFlon $ -0.1)
+    testParse tFlon "-0.1" `shouldBe` Right (LitFlon (-0.1))
 
   it "parse \"1/2\" => 1/2" $
-    testParse tRatn "1/2" `shouldBe` Right (LitRatn $ 1 % 2)
+    testParse tRatn "1/2" `shouldBe` Right (LitRatn (1 % 2))
 
   it "parse \"-1/10\" => -1/10" $
-    testParse tRatn "-1/10" `shouldBe` Right (LitRatn $ -1 % 10)
+    testParse tRatn "-1/10" `shouldBe` Right (LitRatn (-1 % 10))
 
   it "parse \"'\\\''\" => \"'\\\''\"" $
     testParse tChr "'\''" `shouldBe` Right (LitChr '\'')
 
   it "parse \"\"\"\" => \"\"" $
     testParse tStr "\"\"" `shouldBe` Right (LitStr "")
+
+  it "parse \"\n\" => \"\n\"" $
+    testParse tStr "\"\n\"" `shouldBe` Right (LitStr "\n")
+
+  it "parse \"あ い う え お\" => \"あ い う え お\""　$
+    testParse tStr "\"あ い う え お\"" `shouldBe` Right (LitStr "あ い う え お")
