@@ -2,14 +2,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Ylang.Parser.LexerSpec where
 
-import Data.Ratio
-import Data.Text (Text)
-import Text.Parsec
-import Text.Parsec.Text (Parser)
-import Text.Parsec.Error
-import Test.Hspec
-import Ylang.Syntax.Literal
-import Ylang.Parser.Lexer
+import           Data.Ratio
+import           Data.Text            (Text)
+import           Test.Hspec
+import           Text.Parsec
+import           Text.Parsec.Error
+import           Text.Parsec.Text     (Parser)
+import           Ylang.Parser.Lexer
+import           Ylang.Syntax.Literal
 
 instance Eq ParseError where
   a == b = errorMessages a == errorMessages b
@@ -30,16 +30,22 @@ spec = describe "Ylang Lexer" $ do
     testParse tIntn "0" `shouldBe` Right (LitIntn 0)
 
   it "parse \"-10\" => -10" $
-    testParse tIntn "-10" `shouldBe` Right (LitIntn (-10))
+    testParse tIntn "-10" `shouldBe` Right (LitIntn $ -10)
 
   it "parse \"0.1\" => 0.1" $
     testParse tFlon "0.1" `shouldBe` Right (LitFlon 0.1)
 
   it "parse \"-0.1\" => -0.1" $
-    testParse tFlon "-0.1" `shouldBe` Right (LitFlon (-0.1))
+    testParse tFlon "-0.1" `shouldBe` Right (LitFlon $ -0.1)
 
   it "parse \"1/2\" => 1/2" $
-    testParse tRatn "1/2" `shouldBe` Right (LitRatn (1 % 2))
+    testParse tRatn "1/2" `shouldBe` Right (LitRatn $ 1 % 2)
 
   it "parse \"-1/10\" => -1/10" $
-    testParse tRatn "-1/10" `shouldBe` Right (LitRatn (-1 % 10))
+    testParse tRatn "-1/10" `shouldBe` Right (LitRatn $ -1 % 10)
+
+  it "parse \"'\\\''\" => \"'\\\''\"" $
+    testParse tChr "'\''" `shouldBe` Right (LitChr '\'')
+
+  it "parse \"\"\"\" => \"\"" $
+    testParse tStr "\"\"" `shouldBe` Right (LitStr "")

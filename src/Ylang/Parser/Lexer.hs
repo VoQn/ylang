@@ -9,17 +9,18 @@
 -- Stability   :  unstable
 -- Portability :  non-portable (Using -TypeSynonymInstances, -XFlexibleInstances)
 ---------------------------------------------------------------------
+{-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
 module Ylang.Parser.Lexer where
 
-import Control.Applicative hiding ((<|>))
-import Control.Monad
-import Data.Ratio
-import Text.Parsec
-import Text.Parsec.Text (Parser)
-import Ylang.Syntax.Literal
+import           Control.Applicative  hiding (many, (<|>))
+import           Control.Monad
+import           Data.Ratio
+import           Text.Parsec
+import           Text.Parsec.Text     (Parser)
+import           Ylang.Syntax.Literal
 
+import qualified Data.Text            as T
 ---------------------------------------------------------------------
 -- Tokenization
 ---------------------------------------------------------------------
@@ -94,3 +95,9 @@ tRatn = LitRatn <$> tRatio
   where
   tRatio = pack <$> tSig <*> tDig <*> char '/' <*> tDig
   pack s n _ d = s $ n % d
+
+tChr :: Parser Lit
+tChr = '\'' !> LitChr <$> anyChar <* char '\''
+
+tStr :: Parser Lit
+tStr = '"' !> LitStr . T.pack <$> manyTill anyChar (try $ char '"')
