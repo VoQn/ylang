@@ -37,7 +37,7 @@ infixr 3 <!
 (!>) :: (Token t) => t -> Parser a -> Parser a
 t !> r = tokenize t *> r
 
-infix 3 !>
+infixl 3 !>
 
 lexeme :: Parser a -> Parser a
 lexeme p = p <* whiteSpace

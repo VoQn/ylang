@@ -16,8 +16,8 @@ notSpace = satisfy $ not . isSpace
 digits :: Parser String
 digits = many1 digit
 
-tSig :: (Num a) => Parser (a -> a)
-tSig = '-' !> pure negate </> pure id
+sign :: (Num a) => Parser (a -> a)
+sign = '-' !> pure negate </> pure id
 
-tDig :: (Read a, Num a) => Parser a
-tDig = read <$> digits
+intNum :: (Read a, Num a) => Parser a
+intNum = read <$> digits

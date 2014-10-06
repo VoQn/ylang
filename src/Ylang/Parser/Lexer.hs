@@ -35,20 +35,20 @@ tBool :: Parser Lit
 tBool = LitBool <$> (True <! "Yes" </> False <! "No")
 
 tIntn :: Parser Lit
-tIntn = LitIntn <$> tInteger
+tIntn = LitIntn <$> integer
   where
-  tInteger = tSig <*> tDig
+  integer = sign <*> intNum
 
 tFlon :: Parser Lit
-tFlon = LitFlon <$> tFloat
+tFlon = LitFlon <$> floating
   where
-  tFloat = pack <$> tSig <*> digits <*> char '.' <*> digits
+  floating = pack <$> sign <*> digits <*> char '.' <*> digits
   pack s i p f = s . read $ i ++ p : f
 
 tRatn :: Parser Lit
-tRatn = LitRatn <$> tRatio
+tRatn = LitRatn <$> ratio
   where
-  tRatio = pack <$> tSig <*> tDig <*> char '/' <*> tDig
+  ratio = pack <$> sign <*> intNum <*> char '/' <*> intNum
   pack s n _ d = s $ n % d
 
 tChr :: Parser Lit
