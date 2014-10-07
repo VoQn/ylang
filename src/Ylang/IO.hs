@@ -16,11 +16,11 @@ module Ylang.IO where
 import Control.Arrow
 import Data.Monoid
 import Data.Ratio
-import Data.Text (Text)
+import Data.Text              (Text)
 import Data.Text.Lazy.Builder (Builder)
 
 import qualified Data.Text.Lazy.Builder as LB
-import qualified Data.Text.Lazy.IO as LIO
+import qualified Data.Text.Lazy.IO      as LIO
 
 class Display a where
   buildText :: a -> Builder

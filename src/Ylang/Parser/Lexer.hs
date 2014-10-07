@@ -11,11 +11,11 @@
 ---------------------------------------------------------------------
 module Ylang.Parser.Lexer where
 
-import           Control.Applicative  hiding (many, (<|>))
-import           Data.Char
-import           Text.Parsec
-import           Text.Parsec.Text     (Parser)
-import           Ylang.Parser.Combinator
+import Control.Applicative  hiding (many, (<|>))
+import Data.Char
+import Text.Parsec
+import Text.Parsec.Text     (Parser)
+import Ylang.Parser.Combinator
 
 ---------------------------------------------------------------------
 -- Basic Lexer
