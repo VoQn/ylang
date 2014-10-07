@@ -15,6 +15,7 @@ module Ylang.Syntax.Literal where
 import Data.Monoid
 import Data.Text (Text)
 import Ylang.IO
+import Ylang.Type
 
 data Lit
   = LitHole          -- ^ hole : _
@@ -42,3 +43,15 @@ instance Display Lit where
   buildText (LitIntn i) = buildText i
   buildText (LitFlon f) = buildText f
   buildText (LitRatn r) = buildText r
+
+typeofLit :: Lit -> Type
+typeofLit l = case l of
+  LitHole   -> TyBottom
+  LitUnit   -> TyUnit
+  LitBool _ -> TyBool
+  LitChr  _ -> TyChar
+  LitStr  _ -> TyString
+  LitKey  _ -> TyKeyword
+  LitIntn _ -> TyInteger
+  LitFlon _ -> TyFlonum
+  LitRatn _ -> TyRatio
