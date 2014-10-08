@@ -48,7 +48,7 @@ kindOfType :: Type -> Kind
 kindOfType (TyArrow t1 t2) = KindArrow (kindOfType t1) (kindOfType t2)
 kindOfType (TyAll _ t) = kindOfType t
 kindOfType (TyAbs _ k _) = k
-kindOfType _ = KindSter
+kindOfType _ = KindStar
 
 instance Display Type where
   buildText TyTop     = "Set"
@@ -61,11 +61,11 @@ instance Display Type where
   buildText TyKeyword = "Keyword"
   buildText TyNatural = "Nat"
   buildText TyInteger = "Integer"
-  buildText TyFlonum  = "Flunum"
+  buildText TyFlonum  = "Flonum"
   buildText TyRatio   = "Rational"
 
-  buildText (TyVar i l)     = undefined
+  buildText TyVar{}         = undefined
   buildText (TyArrow t1 t2) = buildText t1 <> " -> " <> buildText t2
   buildText (TyAll n t)     = "forall " <> buildText n <> "." <> buildText t
-  buildText (TyAbs n k t)   = undefined
+  buildText TyAbs{}         = undefined
   buildText (TyApp t1 t2)   = spaces $ map buildText [t1, t2]
