@@ -14,32 +14,15 @@
 module Ylang.Context where
 
 import Data.Map (Map)
-import Data.Monoid
 import Control.Monad
 import Control.Monad.Error
 import Control.Monad.Reader
-import Ylang.IO
 import Ylang.Info
 import Ylang.Type
 import Ylang.Eval
+import Ylang.Error
 
 import qualified Data.Map as Map
-
-data RuntimeError
-  = UnboundSymbol Info Name
-  | OutOfIndex    Info Int Int
-  deriving (Eq, Show)
-
-instance Display RuntimeError where
-  buildText err = case err of
-    UnboundSymbol info name ->
-      buildText info <> "\n\t" <>
-      "Unbound Symbol: " <> buildText name
-
-    OutOfIndex info i l ->
-      buildText info <> "\n\t" <>
-      "Out of range index\n\t\t" <>
-      "Target depth: " <> buildText l <> ", but indexed: " <> buildText i
 
 data Binding
   = NameBind      -- ^ λx.x
@@ -94,5 +77,3 @@ nameToIndex info x = ask >>= search 0 . context
       | x == y    -> return c
       | otherwise -> search (c + 1) ctx'
     (_ : ctx') -> search (c + 1) ctx'
-
---
