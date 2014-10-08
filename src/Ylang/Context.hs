@@ -1,4 +1,14 @@
-
+---------------------------------------------------------------------
+-- |
+-- Module      :  Ylang.Context
+-- Description :  Context Structure for Ylang
+-- Copyright   :  (c) 2014 Kazuhiro Mizuhsima
+-- License     :  Apache-2
+--
+-- Maintainer  :  Kazuhiro Mizushima <voqn.tyrantist@gmail.com>
+-- Stability   :  unstable
+-- Portability :  non-portable (Using -XOverloadedStrings, -XFlexibleInstances)
+---------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Ylang.Context where
@@ -84,4 +94,5 @@ nameToIndex info x = ask >>= search 0 . context
       | x == y    -> return c
       | otherwise -> search (c + 1) ctx'
     (_ : ctx') -> search (c + 1) ctx'
+
 --
