@@ -21,9 +21,9 @@ import Ylang.Parser.Lexer
 import qualified Ylang.Parser.Token as T
 
 getInfo :: Parser Info
-getInfo = constructor <$> getPosition
+getInfo = info <$> getPosition
   where
-  constructor pos = FileInput {
+  info pos = FileInput {
       fileName = sourceName   pos
     , line     = sourceLine   pos
     , column   = sourceColumn pos
@@ -31,10 +31,11 @@ getInfo = constructor <$> getPosition
 
 term :: Context -> Parser Term
 term ctx
-   =  literal
-  </> abstruct ctx
+　 = literal
   </> apply    ctx
+  </> abstruct ctx
   </> variable ctx
+  </> parens 　(term ctx)
 
 literal :: Parser Term
 literal = TmLit <$> getInfo <*> lit
@@ -54,7 +55,6 @@ identifier = (:) <$> letter <*> many alphaNum
 variable :: Context -> Parser Term
 variable ctx = drawCtx <$> getInfo <*> identifier
   where
-  drawCtx :: Info -> Name -> Term
   drawCtx info name =
     let len = length ctx in
     case nameToIndex' ctx info name of
@@ -62,22 +62,24 @@ variable ctx = drawCtx <$> getInfo <*> identifier
       Left  _   -> TmSym info name
 
 parseType :: Parser Type
-parseType = arrow </> uniq
+parseType = arrowType </> constantType
   where
-  arrow = TyArrow <$> uniq <*> parseArrow
-  parseArrow = whiteSpace *> string "->" *> whiteSpace *> parseType
-  uniq
-    =  (TyTop     <! "Set")
-   </> (TyBottom  <! "_|_")
-   </> (TyUnit    <! "()")
-   </> (TyBool    <! "Bool")
-   </> (TyChar    <! "Char")
-   </> (TyString  <! "String")
-   </> (TyKeyword <! "Keyword")
-   </> (TyNatural <! "Nat")
-   </> (TyInteger <! "Integer")
-   </> (TyFlonum  <! "Flonum")
-   </> (TyRatio   <! "Rational")
+  arrowType = TyArrow <$> constantType <*> arrow
+  arrow = whiteSpace *> string "->" *> whiteSpace *> parseType
+
+constantType :: Parser Type
+constantType
+   =  (TyTop     <! "Set")
+  </> (TyBottom  <! "_|_")
+  </> (TyUnit    <! "()")
+  </> (TyBool    <! "Bool")
+  </> (TyChar    <! "Char")
+  </> (TyString  <! "String")
+  </> (TyKeyword <! "Keyword")
+  </> (TyNatural <! "Nat")
+  </> (TyInteger <! "Integer")
+  </> (TyFlonum  <! "Flonum")
+  </> (TyRatio   <! "Rational")
 
 binding :: Parser (Name, Binding)
 binding = typeBind
@@ -90,18 +92,25 @@ binding = typeBind
 abstruct :: Context -> Parser Term
 abstruct ctx = form
   where
-  form :: Parser Term
   form = parens $ do
-    inf <- getInfo
-    ags <- parens $ sepBy1 (whiteSpace *> binding) (char ',')
-    let ctx' = foldr (:) ctx (reverse ags)
-    bdy <- whiteSpace *> string "->" *> whiteSpace *> term ctx'
-    return $ foldr (\(n, VarBind t) r -> TmAbs inf n t r) bdy ags
+    info <- getInfo
+    args <- vargs
+    retn <- body (foldr (:) ctx (reverse args))
+    return $ foldr (folding info) retn args
+  vargs   = parens $ sepBy1 (whiteSpace *> binding) (char ',')
+  body cx = whiteSpace *> string "->" *> whiteSpace *> term cx
+  folding fi (n, VarBind t) = TmAbs fi n t
 
+-- Function Apply form (f x)
 apply :: Context -> Parser Term
 apply ctx = form
   where
-  form = TmApp <$> getInfo <*> variable ctx <*> (whiteSpace *> term ctx)
+  form   = app <$> getInfo <*> callee <*> caller
+  callee = parens (apply ctx) </> abstruct ctx </> variable ctx
+  caller = many1 (whiteSpace *> term ctx)
+  app _ f []     = f
+  app i f (t:[]) = TmApp i f t
+  app i f (t:ts) = app i (TmApp i f t) ts
 
 
 --
