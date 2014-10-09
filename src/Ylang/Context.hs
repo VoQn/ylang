@@ -11,6 +11,7 @@
 ---------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 module Ylang.Context where
 
 import Data.Map (Map)
@@ -70,9 +71,19 @@ getBindName info = liftM fst . getBind info
 nameToIndex :: (MonadReader (Env a) m, MonadError RuntimeError m) => Info -> Name -> m Int
 nameToIndex info x = ask >>= search 0 . context
   where
-  search c ctx = case ctx of
+  search c = \case
     [] -> throwError $ UnboundSymbol info x
     ((y, NameBind) : ctx')
       | x == y    -> return c
       | otherwise -> search (c + 1) ctx'
     (_ : ctx') -> search (c + 1) ctx'
+
+nameToIndex' :: Context -> Info -> Name -> Either RuntimeError Int
+nameToIndex' ctx info x = search 0 ctx
+  where
+  search c = \case
+    [] -> Left $ UnboundSymbol info x
+    ((y, VarBind _) : ctx')
+      | x == y    -> Right c
+      | otherwise -> search (c + 1) ctx'
+    (_ : ctx')    -> search (c + 1) ctx'

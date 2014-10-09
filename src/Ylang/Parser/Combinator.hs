@@ -43,7 +43,10 @@ lexeme :: Parser a -> Parser a
 lexeme p = p <* whiteSpace
 
 whiteSpace :: Parser ()
-whiteSpace = skipMany1 space
+whiteSpace = skipMany space
 
 parseTop :: Parser a -> Parser a
 parseTop p = p <* eof
+
+parens :: Parser a -> Parser a
+parens p = char '(' *> p <* char ')'
