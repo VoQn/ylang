@@ -41,19 +41,19 @@ data Env a = Env {
 initEnv :: Env a
 initEnv = Env { symbols = Map.empty, context = [] }
 
-pushContext :: Name -> Binding -> Eval (Env a) e (Env a)
+pushContext :: (Monad m) => Name -> Binding -> EvalT (Env a) e m (Env a)
 pushContext n b = do
   env <- ask
   let ctx = (n, b) : context env
   return $ env { context = ctx }
 
-pushNameBind :: Name -> Eval (Env a) e (Env a)
+pushNameBind :: (Monad m) => Name -> EvalT (Env a) e m (Env a)
 pushNameBind n = pushContext n NameBind
 
-pushVarBind :: Name -> Type -> Eval (Env a) e (Env a)
+pushVarBind :: (Monad m) => Name -> Type -> EvalT (Env a) e m (Env a)
 pushVarBind n = pushContext n . VarBind
 
-getBind :: Info -> Int -> Eval (Env a) RuntimeError (Name, Binding)
+getBind :: (MonadError RuntimeError m) => Info -> Int -> EvalT (Env a) RuntimeError m (Name, Binding)
 getBind info idx = do
   env <- ask
   let ctx = context env
@@ -62,13 +62,13 @@ getBind info idx = do
     then return $ ctx !! idx
     else throwError $ OutOfIndex info idx len
 
-getBinding :: Info -> Int -> Eval (Env a) RuntimeError Binding
+getBinding :: (MonadError RuntimeError m) => Info -> Int -> EvalT (Env a) RuntimeError m Binding
 getBinding info = liftM snd . getBind info
 
-getBoundName :: Info -> Int -> Eval (Env a) RuntimeError Name
+getBoundName :: (MonadError RuntimeError m) => Info -> Int -> EvalT (Env a) RuntimeError m Name
 getBoundName info = liftM fst . getBind info
 
-nameToIndex :: Info -> Name -> Eval (Env a) RuntimeError Int
+nameToIndex :: (MonadError RuntimeError m) => Info -> Name -> EvalT (Env a) RuntimeError m Int
 nameToIndex info x = ask >>= search 0 . context
   where
   search c ctx = case ctx of

@@ -27,7 +27,9 @@ m |-> k = m >>= \r -> local (const r) k
 
 infixr 4 |->
 
-
+------------------------------------------------------------------
+-- Eval
+------------------------------------------------------------------
 newtype Eval s e a = Eval { runEval :: s -> (Either e a, s) }
 
 mapEval :: (a -> b) -> Eval s e a -> Eval s e b
@@ -79,6 +81,9 @@ instance MonadState s (Eval s e) where
   get   = Eval $ \s -> (Right s, s)
   put s = Eval $ const $ runEval (return ()) s
 
+------------------------------------------------------------------
+-- EvalT Eval Transformer
+------------------------------------------------------------------
 newtype EvalT s e m a = EvalT { runEvalT :: s -> m (Either e a, s) }
 
 mapEvalT :: (Monad m) => (a -> b) -> EvalT s e m a -> EvalT s e m b
@@ -131,5 +136,3 @@ instance (MonadError e m) => MonadError e (EvalT s e m) where
   catchError m h = EvalT $ runEvalT m >=> \case
     (Left  e, s) -> runEvalT (h e) s
     (Right x, s) -> return (Right x, s)
-
---
