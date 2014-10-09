@@ -19,7 +19,6 @@ import Control.Monad.Error
 import Control.Monad.Reader
 import Ylang.Info
 import Ylang.Type
-import Ylang.Eval
 import Ylang.Error
 
 import qualified Data.Map as Map
@@ -41,19 +40,19 @@ data Env a = Env {
 initEnv :: Env a
 initEnv = Env { symbols = Map.empty, context = [] }
 
-pushContext :: (Monad m) => Name -> Binding -> EvalT (Env a) e m (Env a)
+pushContext :: (MonadReader (Env a) m) => Name -> Binding -> m (Env a)
 pushContext n b = do
   env <- ask
   let ctx = (n, b) : context env
   return $ env { context = ctx }
 
-pushNameBind :: (Monad m) => Name -> EvalT (Env a) e m (Env a)
+pushNameBind :: (MonadReader (Env a) m) => Name -> m (Env a)
 pushNameBind n = pushContext n NameBind
 
-pushVarBind :: (Monad m) => Name -> Type -> EvalT (Env a) e m (Env a)
+pushVarBind :: (MonadReader (Env a) m) => Name -> Type -> m (Env a)
 pushVarBind n = pushContext n . VarBind
 
-getBind :: (MonadError RuntimeError m) => Info -> Int -> EvalT (Env a) RuntimeError m (Name, Binding)
+getBind :: (MonadReader (Env a) m, MonadError RuntimeError m) => Info -> Int -> m (Name, Binding)
 getBind info idx = do
   env <- ask
   let ctx = context env
@@ -62,13 +61,13 @@ getBind info idx = do
     then return $ ctx !! idx
     else throwError $ OutOfIndex info idx len
 
-getBinding :: (MonadError RuntimeError m) => Info -> Int -> EvalT (Env a) RuntimeError m Binding
+getBinding :: (MonadReader (Env a) m, MonadError RuntimeError m) => Info -> Int -> m Binding
 getBinding info = liftM snd . getBind info
 
-getBoundName :: (MonadError RuntimeError m) => Info -> Int -> EvalT (Env a) RuntimeError m Name
-getBoundName info = liftM fst . getBind info
+getBindName :: (MonadReader (Env a) m, MonadError RuntimeError m) => Info -> Int -> m Name
+getBindName info = liftM fst . getBind info
 
-nameToIndex :: (MonadError RuntimeError m) => Info -> Name -> EvalT (Env a) RuntimeError m Int
+nameToIndex :: (MonadReader (Env a) m, MonadError RuntimeError m) => Info -> Name -> m Int
 nameToIndex info x = ask >>= search 0 . context
   where
   search c ctx = case ctx of
