@@ -38,17 +38,7 @@ term ctx
   </> parens 　(term ctx)
 
 literal :: Parser Term
-literal = TmLit <$> getInfo <*> lit
-  where
-  lit =  T.hole
-     </> T.unit
-     </> T.boolean
-     </> T.rational
-     </> T.float
-     </> T.integer
-     </> T.keyword
-     </> T.charactor
-     </> T.string
+literal = TmLit <$> getInfo <*> T.literal
 
 identifier :: Parser String
 identifier = (:) <$> letter <*> many alphaNum

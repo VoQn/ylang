@@ -67,7 +67,7 @@ spec = describe "Ylang Literal" $ do
     it "buildText 'c' => \"'c'\"" $
       buildText (LitChr 'c') `shouldBe` "'c'"
 
-    it "buildText \"a text\" => \"\"a text\"\"" $
+    it "buildText \"a text\" => \"\\\"a text\\\"\"" $
       buildText (LitStr "a text") `shouldBe` "\"a text\""
 
     it "buildText :keyword => \":keyword\"" $
