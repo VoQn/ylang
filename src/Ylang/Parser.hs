@@ -42,6 +42,7 @@ literal = TmLit <$> getInfo <*> lit
   where
   lit =  T.hole
      </> T.unit
+     </> T.boolean
      </> T.rational
      </> T.float
      </> T.integer
@@ -110,7 +111,7 @@ apply :: Context -> Parser Term
 apply ctx = form
   where
   form   = app <$> getInfo <*> callee <*> caller
-  callee = parens (apply ctx) </> abstruct ctx </> variable ctx
+  callee = parens (apply ctx) </> parens (abstruct ctx) </> variable ctx
   caller = many1 (whiteSpace *> term ctx)
   app _ f []     = f
   app i f (t:[]) = TmApp i f t
