@@ -43,7 +43,6 @@ Library
                   , Ylang.Syntax.Term
                   , Ylang.Parser
                   , Ylang.Parser.Combinator
-                  , Ylang.Parser.Token
                   , Ylang.Parser.Lexer
 
   build-depends:    base

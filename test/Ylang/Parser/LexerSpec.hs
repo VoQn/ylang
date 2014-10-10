@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Ylang.Parser.TokenSpec where
+module Ylang.Parser.LexerSpec where
 
 import Test.Hspec
 
@@ -13,7 +13,7 @@ import Text.Parsec.Error (errorMessages)
 
 import Ylang.Syntax.Literal (Lit(..))
 import Ylang.Syntax.LiteralSpec()
-import Ylang.Parser.Token
+import Ylang.Parser.Lexer
 
 instance Eq ParseError where
   a == b = errorMessages a == errorMessages b

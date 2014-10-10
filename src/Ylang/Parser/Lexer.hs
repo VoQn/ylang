@@ -18,6 +18,7 @@ import Data.Ratio
 import Data.Text            (Text)
 import Text.Parsec
 import Text.Parsec.Text     (Parser)
+import Ylang.Syntax.Literal
 import Ylang.Parser.Combinator
 
 import qualified Data.Text as T
@@ -110,3 +111,19 @@ boolLit
 
 keyword :: Parser Text
 keyword = T.pack <$> (char ':' *> many1 notSpace)
+
+------------------------------------------------------------------
+-- Literal Token for Ylang
+------------------------------------------------------------------
+
+literal :: Parser Lit
+literal
+   =  LitHole <$  symbol "_"
+  </> LitUnit <$  symbol "()"
+  </> LitBool <$> boolLit
+  </> LitRatn <$> rational
+  </> LitFlon <$> float
+  </> LitIntn <$> integer
+  </> LitChr  <$> charLit
+  </> LitStr  <$> toText strLit
+  </> LitKey  <$> keyword

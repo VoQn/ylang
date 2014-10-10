@@ -3,7 +3,6 @@ module Ylang.Parser
  ( module Ylang.Parser.Lexer
  , getInfo
  , term
- , literal
  , binding
  , apply
  ) where
@@ -18,7 +17,7 @@ import Ylang.Context
 import Ylang.Syntax.Term
 import Ylang.Parser.Combinator
 import Ylang.Parser.Lexer
-import qualified Ylang.Parser.Token as T
+-- import qualified Ylang.Parser.Token as T
 
 getInfo :: Parser Info
 getInfo = info <$> getPosition
@@ -31,14 +30,14 @@ getInfo = info <$> getPosition
 
 term :: Context -> Parser Term
 term ctx
-　 = 　literal
+　 = 　TmLit <$> getInfo <*> literal
   </> apply    ctx
   </> abstruct ctx
   </> variable ctx
   </> parens 　(term ctx)
 
-literal :: Parser Term
-literal = TmLit <$> getInfo <*> T.literal
+-- literal :: Parser Term
+-- literal = TmLit <$> getInfo <*> T.literal
 
 variable :: Context -> Parser Term
 variable ctx = drawCtx <$> getInfo <*> identifier

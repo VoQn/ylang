@@ -12,7 +12,7 @@ import Ylang.Type
 import Ylang.Syntax.Literal
 import Ylang.Syntax.Term
 import Ylang.Parser
-import Ylang.Parser.TokenSpec()
+import Ylang.Parser.LexerSpec()
 
 ti :: Info
 ti = FileInput { fileName = "<test>", line = 1, column = 1 }
