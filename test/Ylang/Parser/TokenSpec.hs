@@ -4,7 +4,6 @@
 module Ylang.Parser.TokenSpec where
 
 import Test.Hspec
-import Test.Hspec.QuickCheck
 
 import Data.Ratio        ((%))
 import Data.Text         (Text)
@@ -12,13 +11,9 @@ import Text.Parsec       (ParseError, parse)
 import Text.Parsec.Text  (Parser)
 import Text.Parsec.Error (errorMessages)
 
-import Ylang.IO
 import Ylang.Syntax.Literal (Lit(..))
 import Ylang.Syntax.LiteralSpec()
 import Ylang.Parser.Token
-
-import qualified Data.Text.Lazy         as L
-import qualified Data.Text.Lazy.Builder as LB
 
 instance Eq ParseError where
   a == b = errorMessages a == errorMessages b

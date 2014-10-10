@@ -40,9 +40,6 @@ term ctx
 literal :: Parser Term
 literal = TmLit <$> getInfo <*> T.literal
 
-identifier :: Parser String
-identifier = (:) <$> letter <*> many alphaNum
-
 variable :: Context -> Parser Term
 variable ctx = drawCtx <$> getInfo <*> identifier
   where
@@ -90,10 +87,12 @@ abstruct ctx = form
     param <- params
     retn  <- body (foldr (:) ctx (revargs param))
     return $ foldr folding retn param
-  params  = parens $ commaSep1 $ (,) <$> getInfo <*> binding
+  params  = parens $ commaSep $ (,) <$> getInfo <*> binding
   revargs = reverse . foldr (\(_,a) r -> a : r) []
   body cx = whiteSpace *> string "->" *> whiteSpace *> term cx
-  folding (fi, (n, VarBind ty)) = TmAbs fi n ty
+  folding (fi, bind) = case bind of
+      (n, VarBind ty) -> TmAbs fi n ty
+      (_, _) -> undefined
 
 -- | Parse Function Apply form
 --   example: (f x y z)

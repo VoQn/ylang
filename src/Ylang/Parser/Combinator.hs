@@ -39,17 +39,5 @@ t !> r = tokenize t *> r
 
 infixl 3 !>
 
-lexeme :: Parser a -> Parser a
-lexeme p = p <* whiteSpace
-
-whiteSpace :: Parser ()
-whiteSpace = skipMany space
-
 parseTop :: Parser a -> Parser a
 parseTop p = p <* eof
-
-parens :: Parser a -> Parser a
-parens p = char '(' *> p <* char ')'
-
-commaSep1 :: Parser a -> Parser [a]
-commaSep1 p = (whiteSpace *> p) `sepBy1` char ','
