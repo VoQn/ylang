@@ -14,13 +14,13 @@ data Term
   | TmTyAbs Info Name Type Term -- ^ λX<:T.t (type abstruction)
   | TmTyApp Info Term [Type]    -- ^ t [T]   (apply types to term)
   deriving (Eq, Show)
-
+{-
 data Context
   = CtxEmpty               -- ^ ∅    (empty context)
   | CtxBindTerm Term Type  -- ^ λx.T (bind type to term)
   | CtxBindType Type Type  -- ^ λX.T (bind type to type)
   deriving (Eq, Show)
-
+-}
 data ValAbs
   = ValAbsTerm Name Type Term -- ^ λx:T.t
   | ValAbsType Name Type Term -- ^ λX<:T.t

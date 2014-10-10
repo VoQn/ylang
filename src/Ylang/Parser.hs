@@ -15,7 +15,7 @@ import Text.Parsec.Text (Parser)
 import Ylang.Info
 import Ylang.Type
 import Ylang.Context
-import Ylang.Syntax.Term hiding (Context)
+import Ylang.Syntax.Term
 import Ylang.Parser.Combinator
 import Ylang.Parser.Lexer
 import qualified Ylang.Parser.Token as T
@@ -91,18 +91,18 @@ binding = typeBind
   bind n t = (n, VarBind t)
 
 -- | Parse Lambda Expression
---   example: ((x:T1, y:T2, z:T3) -> (foo x y) z)
+--   example: (x:T1, y:T2, z:T3) -> (foo x y) z)
 abstruct :: Context -> Parser Term
 abstruct ctx = form
   where
-  form = parens $ do
-    info <- getInfo
-    args <- vargs
-    retn <- body (foldr (:) ctx (reverse args))
-    return $ foldr (folding info) retn args
-  vargs   = parens $ sepBy1 (whiteSpace *> binding) (char ',')
+  form = do
+    param <- params
+    retn  <- body (foldr (:) ctx (revargs param))
+    return $ foldr folding retn param
+  params  = parens $ commaSep1 $ (,) <$> getInfo <*> binding
+  revargs = reverse . foldr (\(_,a) r -> a : r) []
   body cx = whiteSpace *> string "->" *> whiteSpace *> term cx
-  folding fi (n, VarBind t) = TmAbs fi n t
+  folding (fi, (n, VarBind ty)) = TmAbs fi n ty
 
 -- | Parse Function Apply form
 --   example: (f x y z)

@@ -34,10 +34,14 @@ Library
 
   exposed-modules:  Ylang.IO
                   , Ylang.Info
+                  , Ylang.Error
+                  , Ylang.Eval
+                  , Ylang.Context
                   , Ylang.Type
                   , Ylang.Type.Kind
                   , Ylang.Syntax.Literal
                   , Ylang.Syntax.Term
+                  , Ylang.Parser
                   , Ylang.Parser.Combinator
                   , Ylang.Parser.Token
                   , Ylang.Parser.Lexer

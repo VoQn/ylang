@@ -50,3 +50,6 @@ parseTop p = p <* eof
 
 parens :: Parser a -> Parser a
 parens p = char '(' *> p <* char ')'
+
+commaSep1 :: Parser a -> Parser [a]
+commaSep1 p = (whiteSpace *> p) `sepBy1` char ','
