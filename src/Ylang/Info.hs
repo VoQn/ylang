@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Ylang.Info where
 
-import           Data.Monoid
-import           Ylang.IO
+import Data.Monoid
+import Ylang.IO
 
 type Name = String
 

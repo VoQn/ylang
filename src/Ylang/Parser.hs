@@ -31,7 +31,7 @@ getInfo = info <$> getPosition
 
 term :: Context -> Parser Term
 term ctx
-　 = literal
+　 = 　literal
   </> apply    ctx
   </> abstruct ctx
   </> variable ctx
@@ -81,14 +81,17 @@ constantType
   </> (TyFlonum  <! "Flonum")
   </> (TyRatio   <! "Rational")
 
+-- | Parse Context Binding
+--   example: x : T
 binding :: Parser (Name, Binding)
 binding = typeBind
   where
-  typeBind  = bind <$> identifier <*> colonBind
-  colonBind = whiteSpace *> char ':' *> whiteSpace *> parseType
+  typeBind  = bind <$> identifier <*> withColon
+  withColon = whiteSpace *> char ':' *> whiteSpace *> parseType
   bind n t = (n, VarBind t)
 
--- Lambda Expression ((x:T1, y:T2, z:T3) -> <term>)
+-- | Parse Lambda Expression
+--   example: ((x:T1, y:T2, z:T3) -> (foo x y) z)
 abstruct :: Context -> Parser Term
 abstruct ctx = form
   where
@@ -101,7 +104,8 @@ abstruct ctx = form
   body cx = whiteSpace *> string "->" *> whiteSpace *> term cx
   folding fi (n, VarBind t) = TmAbs fi n t
 
--- Function Apply form (f x)
+-- | Parse Function Apply form
+--   example: (f x y z)
 apply :: Context -> Parser Term
 apply ctx = form
   where
