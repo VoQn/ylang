@@ -10,6 +10,7 @@ import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
 import Ylang.IO
+import Ylang.Type
 import Ylang.Syntax.Literal
 
 instance Arbitrary Lit where
@@ -102,3 +103,32 @@ spec = describe "Ylang Literal" $ do
 
     it "buildText 1/2 => \"1/2\"" $
       buildText (LitRatn (1 % 2)) `shouldBe` "1/2"
+
+  describe "Enable get own type" $ do
+
+    it "Hole (_)" $
+      typeofLit LitHole `shouldBe` TyBottom
+
+    it "Unit ()" $
+      typeofLit LitUnit `shouldBe` TyUnit
+
+    prop "Bool (Yes/No)" $
+      \b -> typeofLit (LitBool b) `shouldBe` TyBool
+
+    prop "Char {'a','b','0', ... }" $
+      \c -> typeofLit (LitChr c) `shouldBe` TyChar
+
+    prop "String {\"\",\"foo\",\"bar\", ...}" $
+      \str -> typeofLit (LitStr str) `shouldBe` TyString
+
+    prop "Keyword {:a, :b, :c, ... }" $
+      \k -> typeofLit (LitKey k) `shouldBe` TyKeyword
+
+    prop "Integer {... , -1, 0, 1, ... }" $
+      \i -> typeofLit (LitIntn i) `shouldBe` TyInteger
+
+    prop "Flonum {... , -0.1, 0.0, 0.1 , ...}" $
+      \f -> typeofLit (LitFlon f) `shouldBe` TyFlonum
+
+    prop "Ratio {..., -1/10, 0/1, 1/10, ...}" $
+      \r -> typeofLit (LitRatn r) `shouldBe` TyRatio
