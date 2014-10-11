@@ -7,17 +7,16 @@ module Ylang.Parser
  , apply
  ) where
 
-import Control.Applicative hiding ((<|>), many)
+import Control.Applicative     hiding (many, (<|>))
 import Text.Parsec
-import Text.Parsec.Text (Parser)
+import Text.Parsec.Text        (Parser)
 
-import Ylang.Info
-import Ylang.Type
 import Ylang.Context
-import Ylang.Syntax.Term
+import Ylang.Info
 import Ylang.Parser.Combinator
 import Ylang.Parser.Lexer
--- import qualified Ylang.Parser.Token as T
+import Ylang.Syntax.Term
+import Ylang.Type
 
 getInfo :: Parser Info
 getInfo = info <$> getPosition
@@ -36,9 +35,6 @@ term ctx
   </> variable ctx
   </> parens 　(term ctx)
 
--- literal :: Parser Term
--- literal = TmLit <$> getInfo <*> T.literal
-
 variable :: Context -> Parser Term
 variable ctx = drawCtx <$> getInfo <*> identifier
   where
@@ -52,21 +48,21 @@ parseType :: Parser Type
 parseType = arrowType </> constantType
   where
   arrowType = TyArrow <$> constantType <*> arrow
-  arrow = whiteSpace *> string "->" *> whiteSpace *> parseType
+  arrow = whiteSpace *> thinArrow *> parseType
 
 constantType :: Parser Type
 constantType
-   =  (TyTop     <! "Set")
-  </> (TyBottom  <! "_|_")
-  </> (TyUnit    <! "()")
-  </> (TyBool    <! "Bool")
-  </> (TyChar    <! "Char")
-  </> (TyString  <! "String")
-  </> (TyKeyword <! "Keyword")
-  </> (TyNatural <! "Nat")
-  </> (TyInteger <! "Integer")
-  </> (TyFlonum  <! "Flonum")
-  </> (TyRatio   <! "Rational")
+   =  TyTop     <! "Set"
+  </> TyBottom  <! "_|_"
+  </> TyUnit    <! "()"
+  </> TyBool    <! "Bool"
+  </> TyChar    <! "Char"
+  </> TyString  <! "String"
+  </> TyKeyword <! "Keyword"
+  </> TyNatural <! "Nat"
+  </> TyInteger <! "Integer"
+  </> TyFlonum  <! "Flonum"
+  </> TyRatio   <! "Rational"
 
 -- | Parse Context Binding
 --   example: x : T
@@ -74,7 +70,7 @@ binding :: Parser (Name, Binding)
 binding = typeBind
   where
   typeBind  = bind <$> identifier <*> withColon
-  withColon = whiteSpace *> char ':' *> whiteSpace *> parseType
+  withColon = whiteSpace *> colon *> parseType
   bind n t = (n, VarBind t)
 
 -- | Parse Lambda Expression
@@ -88,7 +84,7 @@ abstruct ctx = form
     return $ foldr folding retn param
   params  = parens $ commaSep $ (,) <$> getInfo <*> binding
   revargs = reverse . foldr (\(_,a) r -> a : r) []
-  body cx = whiteSpace *> string "->" *> whiteSpace *> term cx
+  body cx = whiteSpace *> thinArrow *> term cx
   folding (fi, bind) = case bind of
       (n, VarBind ty) -> TmAbs fi n ty
       (_, _) -> undefined
@@ -100,7 +96,7 @@ apply ctx = form
   where
   form   = app <$> getInfo <*> callee <*> caller
   callee = parens (apply ctx) </> parens (abstruct ctx) </> variable ctx
-  caller = many1 (whiteSpace *> term ctx)
+  caller = whiteSpace *> many1 (lexeme $ term ctx)
   app _ f []     = f
   app i f (t:[]) = TmApp i f t
   app i f (t:ts) = app i (TmApp i f t) ts

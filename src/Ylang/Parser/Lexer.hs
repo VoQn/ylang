@@ -11,18 +11,18 @@
 ---------------------------------------------------------------------
 module Ylang.Parser.Lexer where
 
-import Control.Applicative  hiding (many, (<|>))
-import Control.Monad.Identity
-import Data.Char
-import Data.Ratio
-import Data.Text            (Text)
-import Text.Parsec
-import Text.Parsec.Text     (Parser)
-import Ylang.Syntax.Literal
-import Ylang.Parser.Combinator
+import Control.Applicative     ((<$>), (<$), (<*>), (*>), pure)
+import Control.Monad.Identity  (Identity)
+import Data.Char               (isSpace)
+import Data.Ratio              ((%))
+import Data.Text               (Text)
+import Text.Parsec             (many1, satisfy, alphaNum, letter, oneOf)
+import Text.Parsec.Text        (Parser)
+import Ylang.Parser.Combinator ((</>), (<!))
+import Ylang.Syntax.Literal    (Lit(..))
 
-import qualified Data.Text as T
-import qualified Text.Parsec.Token as TK
+import qualified Data.Text               as T
+import qualified Text.Parsec.Token       as TK
 
 ---------------------------------------------------------------------
 -- Basic Lexer
@@ -30,9 +30,6 @@ import qualified Text.Parsec.Token as TK
 
 notSpace :: Parser Char
 notSpace = satisfy $ not . isSpace
-
-sign :: (Num a) => Parser (a -> a)
-sign = '-' !> pure negate </> pure id
 
 ------------------------------------------------------------------
 -- Language Definition of Ylang
@@ -49,12 +46,16 @@ ylangDef = TK.LanguageDef {
   , TK.nestedComments  = False
   , TK.identStart      = letter
   , TK.identLetter     = alphaNum
-  , TK.opStart         = undefined
-  , TK.opLetter        = undefined
-  , TK.reservedNames   = []
-  , TK.reservedOpNames = ["=", "->", "=>", ":", "::", ","]
+  , TK.opStart         = opChar
+  , TK.opLetter        = opChar
+  , TK.reservedNames   = reserves
+  , TK.reservedOpNames = operators
   , TK.caseSensitive   = True
   }
+  where
+  opChar    = oneOf "~!@#$%^&*-+_=|\\:<>,./?"
+  reserves  = []
+  operators = ["=", "->", "=>", ":", "::", ",", ".", "-", "+", "*", "/"]
 
 ------------------------------------------------------------------
 -- Lexer for Ylang
@@ -75,14 +76,48 @@ semiSep = TK.semiSep lexer
 symbol :: String -> Parser String
 symbol = TK.symbol lexer
 
+reserved :: String -> Parser ()
+reserved   = TK.reserved lexer
+
+reservedOp :: String -> Parser ()
+reservedOp = TK.reservedOp lexer
+
+------------------------------------------------------------------
+-- Token
+------------------------------------------------------------------
+
+colon :: Parser ()
+colon =  reservedOp ":"
+
+dot :: Parser ()
+dot = reservedOp "."
+
+thinArrow :: Parser ()
+thinArrow = reservedOp "->"
+
+fatArrow :: Parser ()
+fatArrow = reservedOp "=>"
+
+hyphen :: Parser ()
+hyphen = reservedOp "-"
+
+slash :: Parser ()
+slash = reservedOp "/"
+
 identifier :: Parser String
 identifier = TK.identifier lexer
 
 whiteSpace :: Parser ()
 whiteSpace = TK.whiteSpace lexer
 
+lexeme :: Parser a -> Parser a
+lexeme = TK.lexeme lexer
+
 natural :: Parser Integer
 natural = TK.natural lexer
+
+sign :: (Num a) => Parser (a -> a)
+sign = negate <$ hyphen </> pure id
 
 integer :: Parser Integer
 integer = TK.integer lexer
@@ -100,17 +135,17 @@ toText :: Parser String -> Parser Text
 toText p = T.pack <$> p
 
 rational :: Parser Rational
-rational = ratio <$> sign <*> natural <*> (char '/' *> natural)
+rational = ratio <$> sign <*> natural <*> (slash *> natural)
   where
   ratio f n d = f (n % d)
 
 boolLit :: Parser Bool
 boolLit
-   =  True  <$ symbol "Yes"
-  </> False <$ symbol "No"
+   =  True  <! "Yes"
+  </> False <! "No"
 
 keyword :: Parser Text
-keyword = T.pack <$> (char ':' *> many1 notSpace)
+keyword = colon *> (T.pack <$> many1 notSpace)
 
 ------------------------------------------------------------------
 -- Literal Token for Ylang
